@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudentHub - Kharkiv CT College</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+        .container { max-width: 400px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .card {
+            background: white;
+            color: black;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .schedule-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+        .time { color: #667eea; font-weight: bold; }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            width: 100%;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 StudentHub</h1>
+            <p>Харьковский CT Колледж</p>
+        </div>
+        
+        <div class="card">
+            <h2>📅 Расписание на сегодня</h2>
+            <div class="schedule-item">
+                <div class="time">09:00 - 10:30</div>
+                <div class="subject">Математика</div>
+                <div class="teacher">Ауд. 301</div>
+            </div>
+            <div class="schedule-item">
+                <div class="time">11:00 - 12:30</div>
+                <div class="subject">Программирование</div>
+                <div class="teacher">Ауд. 205</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📚 Актуальные задания</h2>
+            <p>• Математика: задачи 1-5 (до завтра)</p>
+            <p>• Программирование: проект (до пятницы)</p>
+        </div>
+
+        <button class="btn" onclick="alert('Mini App работает! 🎉')">
+            Тестовая кнопка
+        </button>
+    </div>
+
+    <script>
+        // Простейшая логика для Telegram Mini App
+        console.log("StudentHub Mini App загружен!");
+    </script>
+</body>
+</html>
