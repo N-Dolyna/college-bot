@@ -1,47 +1,127 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
+    <title>StudentHub - Расписание</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StudentHub - Kharkiv CT College</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: Arial, sans-serif; 
-            background: linear-gradient(135deg, #667eea, #764ba2);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
-            color: white;
         }
-        .container { max-width: 400px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
         .card {
             background: white;
-            color: black;
-            border-radius: 15px;
+            border-radius: 20px;
             padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            margin-bottom: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
-        .schedule-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border-left: 4px solid #667eea;
+        
+        .group-selector {
+            text-align: center;
         }
-        .time { color: #667eea; font-weight: bold; }
-        .btn {
+        
+        .group-btn {
             background: #667eea;
             color: white;
             border: none;
-            padding: 15px;
-            border-radius: 10px;
-            width: 100%;
+            padding: 15px 20px;
+            border-radius: 12px;
             font-size: 16px;
-            margin-top: 10px;
+            width: 100%;
+            margin-bottom: 10px;
             cursor: pointer;
+        }
+        
+        .week-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .nav-btn {
+            background: #f8f9fa;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        
+        .day-tabs {
+            display: flex;
+            overflow-x: auto;
+            margin-bottom: 15px;
+            gap: 5px;
+        }
+        
+        .day-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background: #f8f9fa;
+            border-radius: 10px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        .day-tab.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .lesson {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .lesson-time {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .lesson-subject {
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .lesson-teacher {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .zoom-link {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 12px;
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -49,37 +129,117 @@
     <div class="container">
         <div class="header">
             <h1>🎓 StudentHub</h1>
-            <p>Харьковский CT Колледж</p>
+            <p>Расписание занятий</p>
         </div>
         
-        <div class="card">
-            <h2>📅 Расписание на сегодня</h2>
-            <div class="schedule-item">
-                <div class="time">09:00 - 10:30</div>
-                <div class="subject">Математика</div>
-                <div class="teacher">Ауд. 301</div>
-            </div>
-            <div class="schedule-item">
-                <div class="time">11:00 - 12:30</div>
-                <div class="subject">Программирование</div>
-                <div class="teacher">Ауд. 205</div>
+        <div class="card group-selector">
+            <h3>Выберите группу</h3>
+            <button class="group-btn" onclick="selectGroup('ОПК-412')">ОПК-412</button>
+            <!-- Можно добавить другие группы -->
+        </div>
+        
+        <div id="schedule-view" style="display: none;">
+            <div class="card">
+                <div class="week-navigation">
+                    <button class="nav-btn" onclick="showWeekView()">📅 Неделя</button>
+                    <button class="nav-btn" onclick="showTodayView()">📋 Сегодня</button>
+                </div>
+                
+                <div id="day-tabs" class="day-tabs">
+                    <!-- Дни недели будут здесь -->
+                </div>
+                
+                <div id="lessons-container">
+                    <!-- Расписание будет здесь -->
+                </div>
             </div>
         </div>
-
-        <div class="card">
-            <h2>📚 Актуальные задания</h2>
-            <p>• Математика: задачи 1-5 (до завтра)</p>
-            <p>• Программирование: проект (до пятницы)</p>
-        </div>
-
-        <button class="btn" onclick="alert('Mini App работает! 🎉')">
-            Тестовая кнопка
-        </button>
     </div>
 
     <script>
-        // Простейшая логика для Telegram Mini App
-        console.log("StudentHub Mini App загружен!");
+        const API_BASE = 'http://localhost:8000';
+        let currentGroup = '';
+        let currentWeekSchedule = null;
+        
+        // Инициализация Telegram Web App
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+        
+        async function selectGroup(group) {
+            currentGroup = group;
+            document.querySelector('.group-selector').style.display = 'none';
+            document.getElementById('schedule-view').style.display = 'block';
+            
+            await loadWeekSchedule(group);
+            showWeekView();
+        }
+        
+        async function loadWeekSchedule(group) {
+            try {
+                const response = await fetch(`${API_BASE}/api/schedule/week/${group}`);
+                currentWeekSchedule = await response.json();
+                updateDayTabs();
+            } catch (error) {
+                alert('Ошибка загрузки расписания');
+            }
+        }
+        
+        function updateDayTabs() {
+            const daysContainer = document.getElementById('day-tabs');
+            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+            
+            daysContainer.innerHTML = days.map(day => `
+                <div class="day-tab ${day === 'monday' ? 'active' : ''}" 
+                     onclick="showDay('${day}')">
+                    ${currentWeekSchedule.week_schedule[day].day_name}
+                </div>
+            `).join('');
+        }
+        
+        function showWeekView() {
+            showDay('monday'); // Показываем понедельник по умолчанию
+        }
+        
+        function showTodayView() {
+            // Получаем расписание на сегодня
+            fetch(`${API_BASE}/api/schedule/today/${currentGroup}`)
+                .then(response => response.json())
+                .then(data => {
+                    displayLessons(data.lessons, `Сегодня (${data.day_name})`);
+                });
+        }
+        
+        function showDay(day) {
+            // Активируем вкладку
+            document.querySelectorAll('.day-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const dayData = currentWeekSchedule.week_schedule[day];
+            displayLessons(dayData.lessons, dayData.day_name);
+        }
+        
+        function displayLessons(lessons, dayName) {
+            const container = document.getElementById('lessons-container');
+            
+            if (lessons.length === 0) {
+                container.innerHTML = '<div class="lesson">Пар нет! 🎉</div>';
+                return;
+            }
+            
+            container.innerHTML = lessons.map(lesson => `
+                <div class="lesson">
+                    <div class="lesson-time">${lesson.time}</div>
+                    <div class="lesson-subject">${lesson.subject}</div>
+                    <div class="lesson-teacher">👨‍🏫 ${lesson.teacher}</div>
+                    ${lesson.zoom_link ? `<a href="${lesson.zoom_link}" class="zoom-link" target="_blank">🔗 Zoom</a>` : ''}
+                </div>
+            `).join('');
+        }
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            // Можно добавить автоматическую загрузку
+        });
     </script>
 </body>
 </html>
