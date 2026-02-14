@@ -196,6 +196,11 @@ def get_google_creds(email):
 # 6. API ROUTES
 # =========================================================
 
+@app.route('/')
+def index():
+    """Serve the main frontend page"""
+    return app.send_static_file('index.html')
+
 @app.route('/api/health', methods=['GET'])
 def health():
     return jsonify({
