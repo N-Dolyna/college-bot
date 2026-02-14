@@ -1,8 +1,9 @@
 Flask==3.0.0
 flask-cors==4.0.0
-google-auth==2.25.2
 google-auth-oauthlib==1.2.0
 google-auth-httplib2==0.2.0
-google-api-python-client==2.110.0
+google-api-python-client==2.100.0
+openpyxl==3.1.2
 requests==2.31.0
-openpyxl
+python-dotenv==1.0.0
+gunicorn==21.2.0
