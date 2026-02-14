@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007AFF">
+    <title>CT College Bot - ОПК-412</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23007AFF'/></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Google Sign-In -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- SheetJS для парсингу Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #007AFF;
+            --primary-gradient: linear-gradient(135deg, #007AFF 0%, #6C63FF 100%);
+            --secondary: #4A6CF7;
+            --accent-blue: #00B4D8;
+            --accent-purple: #6C63FF;
+            
+            --bg-primary: #F9FAFB;
+            --bg-secondary: #FFFFFF;
+            --bg-glass: rgba(255, 255, 255, 0.7);
+            --bg-glass-dark: rgba(255, 255, 255, 0.9);
+            
+            --text-primary: #1C1C1E;
+            --text-secondary: #6E6E73;
+            --text-tertiary: #AEAEB2;
+            
+            --border: #E5E5EA;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            
+            --success: #34C759;
+            --warning: #FFB800;
+            --danger: #FF3B30;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #000000;
+            --bg-secondary: #1C1C1E;
+            --bg-glass: rgba(28, 28, 30, 0.7);
+            --bg-glass-dark: rgba(28, 28, 30, 0.9);
+            
+            --text-primary: #FFFFFF;
+            --text-secondary: #AEAEB2;
+            --text-tertiary: #6E6E73;
+            
+            --border: #38383A;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding-bottom: 80px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 400px;
+            background: linear-gradient(180deg, #007AFF15 0%, transparent 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .geometric-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 0;
+            background-image: 
+                linear-gradient(30deg, var(--primary) 12%, transparent 12.5%, transparent 87%, var(--primary) 87.5%, var(--primary)),
+                linear-gradient(150deg, var(--primary) 12%, transparent 12.5%, transparent 87%, var(--primary) 87.5%, var(--primary));
+            background-size: 80px 140px;
+            background-position: 0 0, 0 0, 40px 70px, 40px 70px;
+        }
+
+        /* HEADER */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+        }
+
+        .header-content {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--primary-gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .logo-text h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .current-info {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* DATE SELECTOR */
+        .date-selector {
+            display: flex;
+            gap: 12px;
+            margin: 0 auto 24px; /* Центрируем контейнер */
+            max-width: 500px; /* Ограничиваем ширину */
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: none;
+            justify-content: center;
+        }
+
+        .date-selector::-webkit-scrollbar {
+            display: none;
+        }
+
+        .date-btn {
+            flex-shrink: 0;
+            min-width: 75px;
+            padding: 16px 12px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+        }
+
+        .date-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+
+        .date-btn.active {
+            background: var(--primary-gradient);
+            border-color: transparent;
+            box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .date-btn .day {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--text-primary);
+            transition: color 0.3s;
+        }
+
+        .date-btn.active .day {
+            color: white;
+        }
+
+        .date-btn .date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* LESSON CARD */
+        .lesson-card {
+            background: var(--bg-glass-dark);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .lesson-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--primary-gradient);
+            border-radius: 0 4px 4px 0;
+        }
+
+        .lesson-card:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .lesson-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .lesson-time {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--primary);
+        }
+
+        .lesson-type {
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.1), rgba(108, 99, 255, 0.1));
+            color: var(--primary);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .lesson-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .lesson-details {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .lesson-detail-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .conference-link {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .conference-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 14px 20px;
+            background: var(--success);
+            color: white;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
+        }
+
+        .conference-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(52, 199, 89, 0.4);
+        }
+
+        /* HOMEWORK CARD */
+        .homework-card {
+            background: var(--bg-glass-dark);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .homework-card.status-pending::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--warning);
+        }
+
+        .homework-card.status-completed::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--success);
+        }
+
+        .homework-card.status-overdue::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--danger);
+        }
+
+        .homework-card:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .homework-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+            gap: 12px;
+        }
+
+        .homework-subject {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+
+        .homework-status {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pending {
+            background: linear-gradient(135deg, rgba(255, 184, 0, 0.15), rgba(255, 184, 0, 0.05));
+            color: var(--warning);
+        }
+
+        .status-completed {
+            background: linear-gradient(135deg, rgba(52, 199, 89, 0.15), rgba(52, 199, 89, 0.05));
+            color: var(--success);
+        }
+
+        .status-overdue {
+            background: linear-gradient(135deg, rgba(255, 59, 48, 0.15), rgba(255, 59, 48, 0.05));
+            color: var(--danger);
+        }
+
+        .homework-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .homework-deadline {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-tertiary);
+            margin-bottom: 16px;
+            background: rgba(0, 0, 0, 0.03);
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+
+        [data-theme="dark"] .homework-deadline {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .homework-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-primary);
+            transform: translateY(-2px);
+        }
+
+        /* PROFILE */
+        .profile-card {
+            background: var(--bg-glass-dark);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: 700;
+            box-shadow: 0 8px 24px rgba(0, 122, 255, 0.3);
+            overflow: hidden;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-info h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .profile-info p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .profile-field {
+            margin-bottom: 16px;
+        }
+
+        .profile-field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .profile-field input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+
+        .profile-field input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        /* AUTH */
+        .auth-container {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .auth-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 24px;
+            background: var(--primary-gradient);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            box-shadow: 0 12px 32px rgba(0, 122, 255, 0.3);
+        }
+
+        .auth-container h2 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .auth-container p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        #googleSignInBtn {
+            display: inline-block;
+        }
+
+        /* ADMIN PANEL */
+        .admin-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .admin-section h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .upload-section {
+            background: var(--bg-primary);
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 32px 20px;
+            text-align: center;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-section:hover {
+            border-color: var(--primary);
+            background: rgba(0, 122, 255, 0.05);
+        }
+
+        .upload-section input[type="file"] {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .upload-text {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .upload-hint {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* BOTTOM NAV */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-top: 1px solid var(--border);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            padding: 8px 0;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 12px;
+            cursor: pointer;
+            color: var(--text-tertiary);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            position: relative;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 32px;
+            height: 3px;
+            background: var(--primary-gradient);
+            border-radius: 0 0 3px 3px;
+        }
+
+        .nav-icon {
+            font-size: 22px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .nav-item.active .nav-icon {
+            transform: scale(1.1);
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-tertiary);
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* LOADING */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 16px;
+            }
+
+            .homework-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // OAuth callback handler (как у вас сейчас)
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            if (code) {
+                console.log('🔄 Обнаружен OAuth code, обработка...');
+                fetch('http://localhost:5000/api/auth/google/callback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('❌ Ошибка:', data.error);
+                        alert('Помилка авторизації: ' + (data.error_description || data.error || JSON.stringify(data)));
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        return;
+                    }
+                    console.log('✅ Авторизация успешна:', data.user);
+                    const userData = {
+                        name: data.user.name,
+                        email: data.user.email,
+                        picture: data.user.picture,
+                        group: 'ОПК-412',
+                        role: (data.user.email.endsWith('@kpi.edu.ua') || data.user.email === 'nikdolyna@gmail.com') ? 'admin' : 'student',
+                        googleId: data.user.email
+                    };
+                    localStorage.setItem('ct_user_opk412', JSON.stringify(userData));
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    alert('Успішно авторизовано! Сторінка буде перезавантажена.');
+                    window.location.reload();
+                })
+                .catch(error => {
+                    console.error('❌ Ошибка:', error);
+                    alert('Помилка: ' + error.message);
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                });
+            }
+        })();
+    </script>
+
+    <div class="geometric-bg"></div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo-icon">CT</div>
+                <div class="logo-text">
+                    <h1>CT College Bot</h1>
+                    <div class="current-info" id="currentInfo">Група ОПК-412</div>
+                </div>
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">🌙</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="scheduleTab" class="tab-content active">
+            <div class="date-selector" id="dateSelector"></div>
+            <div id="scheduleContent"></div>
+        </div>
+
+        <div id="homeworkTab" class="tab-content">
+            <div id="homeworkContent"></div>
+        </div>
+
+        <div id="profileTab" class="tab-content">
+            <div id="profileContent">
+                <div id="loggedInProfile" style="display:none;">
+                    <div class="profile-card" id="profileCard" style="display:none;">
+                        <div class="profile-header">
+                            <div class="avatar" id="userAvatar"></div>
+                            <div class="profile-info" style="flex:1;">
+                                <h2 id="profileName">User</h2>
+                                <p id="profileEmail" style="color:var(--text-secondary);"></p>
+                                <div id="profileStats" style="margin-top:10px; color:var(--text-secondary); font-size:14px;"></div>
+                            </div>
+                            <div>
+                                <button class="btn btn-secondary" onclick="logout()">Вийти</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-card admin-section" id="adminPanel" style="display: none;">
+    <h3>📊 Адміністрування</h3>
+    <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 16px;">
+        Завантажте Excel файл з розкладом або редагуйте посилання на уроки.
+    </p>
+
+    <!-- Drag & Drop область -->
+    <div class="upload-section" id="uploadDropZone" style="position: relative;">
+        <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="handleExcelUpload(event)" style="display: none;">
+        
+        <div class="upload-icon">📄</div>
+        <div class="upload-text">Перетягніть файл сюди</div>
+        <div class="upload-hint">або натисніть для вибору</div>
+        <div style="margin-top: 12px; font-size: 13px; color: var(--text-secondary);">
+            Excel файл (.xlsx, .xls)
+        </div>
+        
+        <!-- Индикатор загрузки -->
+        <div id="uploadProgress" style="display: none; margin-top: 16px;">
+            <div class="spinner" style="width: 30px; height: 30px; margin: 0 auto;"></div>
+            <div style="margin-top: 8px; font-size: 13px; color: var(--text-primary);">
+                Завантаження та парсинг...
+            </div>
+        </div>
+    </div>
+
+    <!-- Кнопки действий -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;">
+        <button class="btn btn-secondary" onclick="document.getElementById('excelFile').click()">
+            📂 Вибрати файл
+        </button>
+        
+        <button class="btn btn-primary" onclick="openScheduleLinkEditor()">
+            ✏️ Редагувати
+        </button>
+    </div>
+
+    <button class="btn btn-secondary" style="width: 100%; margin-top: 12px;" onclick="parseLocalSchedule()">
+        📁 Завантажити з huy.xlsx
+    </button>
+
+    <button class="btn btn-secondary" id="saveServerBtn" style="width:100%; margin-top:12px;" onclick="saveScheduleToServer()">
+        💾 Зберегти на сервер (admin)
+    </button>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+        <button class="btn btn-primary" onclick="viewParsedSchedule()">
+            👁️ Переглянути
+        </button>
+        <button class="btn btn-secondary" onclick="exportSchedule()">
+            📥 Експорт JSON
+        </button>
+    </div>
+</div>
+
+<script>
+// Drag & Drop функционал
+(function initDragDrop() {
+    const dropZone = document.getElementById('uploadDropZone');
+    const fileInput = document.getElementById('excelFile');
+    
+    if (!dropZone || !fileInput) return;
+
+    // Клик по зоне открывает выбор файла
+    dropZone.addEventListener('click', (e) => {
+        if (e.target.closest('#uploadProgress')) return; // Не кликать во время загрузки
+        fileInput.click();
+    });
+
+    // Предотвращаем стандартное поведение браузера
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // Визуальная обратная связь
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight() {
+        dropZone.style.borderColor = 'var(--primary)';
+        dropZone.style.background = 'rgba(0, 122, 255, 0.1)';
+        dropZone.style.transform = 'scale(1.02)';
+    }
+
+    function unhighlight() {
+        dropZone.style.borderColor = '';
+        dropZone.style.background = '';
+        dropZone.style.transform = '';
+    }
+
+    // Обработка drop
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+
+        if (files.length > 0) {
+            fileInput.files = files;
+            // Триггерим событие change
+            const event = new Event('change', { bubbles: true });
+            fileInput.dispatchEvent(event);
+        }
+    }
+
+    // Показать индикатор загрузки
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            const progress = document.getElementById('uploadProgress');
+            if (progress) {
+                progress.style.display = 'block';
+                dropZone.querySelector('.upload-icon').style.display = 'none';
+                dropZone.querySelector('.upload-text').style.display = 'none';
+                dropZone.querySelector('.upload-hint').style.display = 'none';
+            }
+        }
+    });
+})();
+
+// Функция для просмотра распарсенного расписания
+function viewParsedSchedule() {
+    const schedule = scheduleData['ОПК-412'];
+    if (!schedule || schedule.length === 0) {
+        alert('Розклад порожній. Завантажте файл спочатку.');
+        return;
+    }
+
+    const days = ['Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця'];
+    let text = '📅 РОЗКЛАД ОПК-412\n\n';
+    
+    schedule.forEach((day, i) => {
+        text += `${days[i]} (${day.length} пар):\n`;
+        day.forEach((lesson, j) => {
+            text += `  ${j+1}. ${lesson.time || ''} - ${lesson.title || 'Без назви'}\n`;
+            if (lesson.teacher) text += `     👤 ${lesson.teacher}\n`;
+            if (lesson.room) text += `     🚪 ${lesson.room}\n`;
+            if (lesson.conference) text += `     🔗 ${lesson.conference}\n`;
+        });
+        text += '\n';
+    });
+
+    // Создаем модальное окно для просмотра
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.right = '0';
+    modal.style.bottom = '0';
+    modal.style.background = 'rgba(0,0,0,0.5)';
+    modal.style.zIndex = '999999';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.padding = '20px';
+
+    modal.innerHTML = `
+        <div style="background: var(--bg-secondary); border-radius: 16px; padding: 24px; max-width: 600px; max-height: 80vh; overflow-y: auto; width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="margin: 0;">📅 Розклад ОПК-412</h3>
+                <button class="btn btn-secondary" onclick="this.closest('div[style*=\"position: fixed\"]').remove()">✕</button>
+            </div>
+            <pre style="white-space: pre-wrap; font-family: monospace; font-size: 13px; line-height: 1.6; color: var(--text-primary);">${text}</pre>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 16px;" onclick="this.closest('div[style*=\"position: fixed\"]').remove()">Закрити</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+}
+</script>
+                </div>
+
+                <div id="loginProfile">
+                    <div class="auth-container">
+                        <div class="auth-icon">🔐</div>
+                        <h2>Вхід до системи</h2>
+                        <p>Увійдіть через Google для доступу до розкладу та завдань</p>
+                        <div id="googleSignInBtn"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a class="nav-item active" onclick="switchTab('schedule')">
+            <div class="nav-icon">📅</div>
+            <div class="nav-label">Розклад</div>
+        </a>
+        <a class="nav-item" onclick="switchTab('homework')">
+            <div class="nav-icon">📚</div>
+            <div class="nav-label">Завдання</div>
+        </a>
+        <a class="nav-item" onclick="switchTab('profile')">
+            <div class="nav-icon">👤</div>
+            <div class="nav-label">Профіль</div>
+        </a>
+    </div>
+
+    <script src="app-opk412.js"></script>
+</body>
+</html>
