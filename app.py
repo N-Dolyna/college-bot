@@ -257,7 +257,7 @@ def auth_init():
         logger.exception("Auth init failed")
         return json_error(str(e), 500)
 
-@app.route('/api/auth/google/callback', methods=['GET', 'POST'])
+@app.route('/api/auth/google/callback', methods=['GET'])
 @require_google_auth
 def auth_callback():
     code = request.args.get('code')
@@ -265,8 +265,8 @@ def auth_callback():
 
     if not code:
         return json_error("No code")
+
     try:
-        # Обмен кода
         token_url = "https://oauth2.googleapis.com/token"
         payload = {
             'code': code,
@@ -275,9 +275,12 @@ def auth_callback():
             'redirect_uri': redirect_uri,
             'grant_type': 'authorization_code'
         }
+
         res = requests.post(token_url, data=payload, timeout=10)
         t_data = res.json()
-        if 'error' in t_data: return json_error(t_data.get('error_description', 'Token error'))
+
+        if 'error' in t_data:
+            return json_error(t_data.get('error_description', 'Token error'))
 
         # Профиль
         creds = Credentials(token=t_data['access_token'])
