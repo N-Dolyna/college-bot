@@ -258,7 +258,7 @@ def auth_init():
         logger.exception("Auth init failed")
         return json_error(str(e), 500)
 
-@app.route('/api/auth/google/callback', methods=['POST'])  # ✅ Поменяли на POST
+@app.route('/api/auth/google/callback', methods=['GET', 'POST'])  # ✅ Поменяли на POST
 def auth_callback():
     code = request.json.get('code')  # ✅ Из JSON body
     redirect_uri = request.json.get('redirect_uri')  # ✅ Из JSON body
