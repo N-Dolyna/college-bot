@@ -176,23 +176,28 @@ function initGoogleAuth() {
 
 async function loginWithGoogle() {
   try {
-    const redirectUri = 'http://localhost:8000';
-    console.log('🔐 Requesting auth URL with redirect_uri:', redirectUri);
+    const redirect_uri = window.location.origin;  // Автоматически определяет домен
+    console.log('🔐 Requesting auth URL with redirect_uri:', redirect_uri);
     
-    const resp = await fetch(`${API_BASE}/auth/google`, {
+    const response = await fetch(`${API_BASE}/auth/google`, {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      credentials: 'include',               
-      body: JSON.stringify({redirect_uri: redirectUri})
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ redirect_uri })
     });
-    if (!resp.ok) throw new Error('Не вдалося запросити URL авторизації');
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error);
-    console.log('✅ Got auth URL, redirecting to Google...');
-    window.location.href = data.authUrl;
-  } catch (e) {
-    console.error('loginWithGoogle error', e);
-    alert('Помилка авторизації: ' + (e.message || e));
+
+    if (!response.ok) {
+      throw new Error('Не вдалося запросити URL авторизації');
+    }
+
+    const data = await response.json();
+    if (data.success && data.authUrl) {
+      window.location.href = data.authUrl;
+    } else {
+      throw new Error('Не отримано URL авторизації');
+    }
+  } catch (error) {
+    console.error('loginWithGoogle error', error);
+    showNotification('Помилка авторизації: ' + error.message, 'error');
   }
 }
 
