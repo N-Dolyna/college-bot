@@ -9,6 +9,8 @@ import logging
 import threading
 import tempfile
 import requests
+import jwt
+import datetime
 from datetime import datetime, timezone
 from functools import wraps
 from flask import Flask, request, jsonify, session, redirect
@@ -281,13 +283,15 @@ def auth_callback():
         if 'error' in t_data:
             return json_error(t_data.get('error_description', 'Token error'))
 
-        # Профиль
+        # Получаем профиль
         creds = Credentials(token=t_data['access_token'])
         user_info = build('oauth2', 'v2', credentials=creds).userinfo().get().execute()
         email = user_info.get('email')
-        if not email: return json_error("No email", 500)
 
-        # Сохранение
+        if not email:
+            return json_error("No email", 500)
+
+        # Сохранение токена Google
         save_data = {
             'token': t_data['access_token'],
             'refresh_token': t_data.get('refresh_token'),
@@ -296,15 +300,35 @@ def auth_callback():
             'client_secret': Config.GOOGLE_CLIENT_SECRET,
             'scopes': t_data.get('scope', '').split()
         }
-        # Сохраняем старый refresh_token, если новый не пришел
+
         old_data = USER_TOKENS_CACHE.get(email)
         if not save_data['refresh_token'] and old_data:
             save_data['refresh_token'] = old_data.get('refresh_token')
 
         save_token(email, save_data)
-        
+
         logger.info(f"✅ Logged in: {email}")
-        return redirect("https://ct-college-bot.onrender.com/")
+
+        # ===== JWT создаём здесь =====
+        payload = {
+            "email": email,
+            "role": "admin" if email in Config.ADMIN_EMAILS else "student",
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7)
+        }
+
+        token = jwt.encode(payload, Config.SECRET_KEY, algorithm="HS256")
+
+        response = redirect("https://ct-college-bot.onrender.com/")
+        response.set_cookie(
+            "token",
+            token,
+            httponly=True,
+            secure=True,
+            samesite="Lax"
+        )
+
+        return response
+
     except Exception as e:
         logger.exception("Auth callback failed")
         return json_error(str(e), 500)
