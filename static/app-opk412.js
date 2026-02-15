@@ -176,7 +176,7 @@ function initGoogleAuth() {
 
 async function loginWithGoogle() {
   try {
-    const redirect_uri = window.location.origin;  // Автоматически определяет домен
+    const redirect_uri = `${window.location.origin}/api/auth/google/callback`;  // Автоматически определяет домен
     console.log('🔐 Requesting auth URL with redirect_uri:', redirect_uri);
     
     const response = await fetch(`${API_BASE}/auth/google`, {
