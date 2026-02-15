@@ -61,7 +61,7 @@ async function handleOAuthCallback() {
   
   try {
     // Используем точный redirect_uri, совпадающий с Google Console
-    const redirectUri = window.location.origin;
+    const redirectUri = `${window.location.origin}/api/auth/google/callback`;
     console.log('📤 Sending to backend:', { code: code.substring(0, 20) + '...', redirectUri });
     
     const resp = await fetch(`${API_BASE}/auth/google/callback`, {
