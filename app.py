@@ -307,7 +307,7 @@ def auth_callback():
 
         save_token(email, save_data)
 
-        logger.info(f"✅ Logged in: {email}")
+        logger.info(f"Logged in: {email}")
 
         # ===== Создаём JWT =====
         jwt_payload = {
@@ -318,7 +318,6 @@ def auth_callback():
 
         token = jwt.encode(jwt_payload, Config.SECRET_KEY, algorithm="HS256")
 
-        # ===== Отправляем редирект с JWT в cookie =====
         response = redirect("https://ct-college-bot.onrender.com/")
         response.set_cookie(
             "token",
@@ -333,6 +332,7 @@ def auth_callback():
     except Exception as e:
         logger.exception("Auth callback failed")
         return json_error(str(e), 500)
+
 
 @app.route('/api/auth/check', methods=['GET'])
 def auth_check():
