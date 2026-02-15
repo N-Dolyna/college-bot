@@ -258,10 +258,10 @@ def auth_init():
         logger.exception("Auth init failed")
         return json_error(str(e), 500)
 
-@app.route('/api/auth/google/callback', methods=['GET'])
+@app.route('/api/auth/google/callback', methods=['POST'])  # ✅ Поменяли на POST
 def auth_callback():
-    code = request.args.get('code')
-    redirect_uri = Config.GOOGLE_REDIRECT_URI
+    code = request.json.get('code')  # ✅ Из JSON body
+    redirect_uri = request.json.get('redirect_uri')  # ✅ Из JSON body
 
     if not code:
         return json_error("No code")
@@ -317,16 +317,27 @@ def auth_callback():
 
         token = jwt.encode(jwt_payload, Config.SECRET_KEY, algorithm="HS256")
 
-        response = redirect("https://ct-college-bot.onrender.com/")
-        response.set_cookie(
-            "token",
+        # ✅ ВОЗВРАЩАЕМ JSON вместо redirect
+        response_data = {
+            'success': True,
+            'user': {
+                'name': user_info.get('name', ''),
+                'email': email,
+                'picture': user_info.get('picture', ''),
+                'role': 'admin' if email in Config.ADMIN_EMAILS else 'student'
+            },
+            'token': token
+        }
+        
+        resp = jsonify(response_data)
+        resp.set_cookie(
+            'token',
             token,
             httponly=True,
             secure=True,
-            samesite="Lax"
+            samesite='Lax'
         )
-
-        return response
+        return resp
 
     except Exception as e:
         logger.exception("Auth callback failed")
