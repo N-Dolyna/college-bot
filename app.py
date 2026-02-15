@@ -259,7 +259,6 @@ def auth_init():
         return json_error(str(e), 500)
 
 @app.route('/api/auth/google/callback', methods=['GET'])
-@require_google_auth
 def auth_callback():
     code = request.args.get('code')
     redirect_uri = Config.GOOGLE_REDIRECT_URI
