@@ -427,4 +427,4 @@ if __name__ == '__main__':
     
     port = int(os.getenv('PORT', 8000))
     logger.info(f"🚀 Server running on port {port}")
-    app.run(debug=True, port=port, host='0.0.0.0')
+    app.run(debug=False, port=port, host='0.0.0.0')
