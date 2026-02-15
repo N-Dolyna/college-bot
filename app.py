@@ -11,9 +11,8 @@ import tempfile
 import requests
 from datetime import datetime, timezone
 from functools import wraps
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session, redirect
 from flask_cors import CORS
-
 # Google Auth Libraries
 try:
     from google.oauth2.credentials import Credentials
@@ -305,15 +304,7 @@ def auth_callback():
         save_token(email, save_data)
         
         logger.info(f"✅ Logged in: {email}")
-        return jsonify({
-            'success': True,
-            'user': {
-                'name': user_info.get('name'),
-                'email': email,
-                'picture': user_info.get('picture'),
-                'role': 'admin' if email in Config.ADMIN_EMAILS else 'student'
-            }
-        })
+        return redirect("https://ct-college-bot.onrender.com/")
     except Exception as e:
         logger.exception("Auth callback failed")
         return json_error(str(e), 500)
