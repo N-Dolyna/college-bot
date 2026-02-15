@@ -201,6 +201,16 @@ def index():
     """Serve the main frontend page"""
     return app.send_static_file('index.html')
 
+@app.route('/app-opk412.js')
+def serve_js():
+    """Serve JavaScript file"""
+    return app.send_static_file('app-opk412.js')
+
+@app.route('/manifest.json')
+def serve_manifest():
+    """Serve manifest file"""
+    return app.send_static_file('manifest.json')
+
 @app.route('/api/health', methods=['GET'])
 def health():
     return jsonify({
