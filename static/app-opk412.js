@@ -1,7 +1,7 @@
 // ===== CT COLLEGE BOT - ОПК-412 (FULL with admin editor + server sync) =====
 
 // ===== CONFIG =====
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'https://ct-college-bot.onrender.com/';
 
 // ===== STORAGE KEYS =====
 const STORAGE_KEYS = {
