@@ -309,15 +309,16 @@ def auth_callback():
 
         logger.info(f"✅ Logged in: {email}")
 
-        # ===== JWT создаём здесь =====
-        payload = {
+        # ===== Создаём JWT =====
+        jwt_payload = {
             "email": email,
             "role": "admin" if email in Config.ADMIN_EMAILS else "student",
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7)
+            "exp": datetime.utcnow() + timedelta(days=7)
         }
 
-        token = jwt.encode(payload, Config.SECRET_KEY, algorithm="HS256")
+        token = jwt.encode(jwt_payload, Config.SECRET_KEY, algorithm="HS256")
 
+        # ===== Отправляем редирект с JWT в cookie =====
         response = redirect("https://ct-college-bot.onrender.com/")
         response.set_cookie(
             "token",
