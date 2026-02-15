@@ -92,7 +92,13 @@ validate_config()
 
 app = Flask(__name__)
 app.config.from_object(Config)
-CORS(app, supports_credentials=True, origins=Config.ALLOWED_CORS)
+from flask_cors import cross_origin
+CORS(app, 
+     supports_credentials=True, 
+     origins=Config.ALLOWED_CORS if Config.ALLOWED_CORS else ['*'],
+     allow_headers=['Content-Type', 'Authorization'],
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+     expose_headers=['Content-Type'])
 
 # =========================================================
 # 3. STORAGE (JSON + Locks)
