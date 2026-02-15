@@ -260,11 +260,11 @@ def auth_init():
 @app.route('/api/auth/google/callback', methods=['GET', 'POST'])
 @require_google_auth
 def auth_callback():
-    data = request.json or {}
-    code = data.get('code')
-    redirect_uri = data.get('redirect_uri', Config.GOOGLE_REDIRECT_URI)
-    if not code: return json_error("No code")
+    code = request.args.get('code')
+    redirect_uri = Config.GOOGLE_REDIRECT_URI
 
+    if not code:
+        return json_error("No code")
     try:
         # Обмен кода
         token_url = "https://oauth2.googleapis.com/token"
