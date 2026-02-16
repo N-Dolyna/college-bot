@@ -67,12 +67,15 @@ function loadUserFromCookie() {
   const userDataCookie = getCookie('user_data');
   if (userDataCookie) {
     try {
-      userData = JSON.parse(decodeURIComponent(userDataCookie));
+      // ✅ Декодируем из base64
+      const decodedJson = atob(userDataCookie);
+      userData = JSON.parse(decodedJson);
+      
       isLoggedIn = true;
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
       console.log('✅ Loaded user from cookie:', userData.email);
       
-      // Удаляем cookie после чтения (он больше не нужен)
+      // Удаляем cookie после чтения
       document.cookie = 'user_data=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       
       updateProfileView();
@@ -83,7 +86,6 @@ function loadUserFromCookie() {
   }
   return false;
 }
-
 // ===== OAUTH CALLBACK HANDLER =====
 async function handleOAuthCallback() {
   const params = new URLSearchParams(window.location.search);
