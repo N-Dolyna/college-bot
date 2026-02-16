@@ -11,6 +11,7 @@ import tempfile
 import requests
 import jwt
 import datetime
+import base64
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import Flask, request, jsonify, session, redirect
