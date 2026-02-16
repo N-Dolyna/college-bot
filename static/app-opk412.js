@@ -878,8 +878,19 @@ function renderScheduleEditor(group, schedule) {
   `;
   document.body.appendChild(overlay);
 
-  document.getElementById('closeEditorBtn').onclick = () => overlay.remove();
-  document.getElementById('saveEditorBtn').onclick = () => {
+  // Закрытие при клике на затемнённый фон (НО НЕ на само модальное окно)
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.remove();
+    }
+  });
+
+  document.getElementById('closeEditorBtn').onclick = (e) => {
+    e.stopPropagation();
+    overlay.remove();
+  };
+  document.getElementById('saveEditorBtn').onclick = (e) => {
+    e.stopPropagation();
     // gather edited schedule from DOM
     const newSchedule = readScheduleFromEditor();
     scheduleData[group] = newSchedule;
@@ -887,7 +898,8 @@ function renderScheduleEditor(group, schedule) {
     loadScheduleForCurrentDay();
     alert('Розклад збережено локально.');
   };
-  document.getElementById('saveServerEditorBtn').onclick = async () => {
+  document.getElementById('saveServerEditorBtn').onclick = async (e) => {
+    e.stopPropagation();
     const newSchedule = readScheduleFromEditor();
     scheduleData[group] = newSchedule;
     saveScheduleData();
@@ -932,6 +944,7 @@ function renderScheduleEditor(group, schedule) {
   // apply buttons behavior: update underlying schedule variable (in DOM)
   body.querySelectorAll('.editor-apply-btn').forEach(btn => {
     btn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
       const d = Number(btn.dataset.day);
       const idx = Number(btn.dataset.idx);
       const input = body.querySelector(`.editor-link-input[data-day="${d}"][data-idx="${idx}"]`);
