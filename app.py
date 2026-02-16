@@ -258,13 +258,23 @@ def auth_init():
         logger.exception("Auth init failed")
         return json_error(str(e), 500)
 
-@app.route('/api/auth/google/callback', methods=['GET', 'POST'])  # ✅ Поменяли на POST
+@app.route('/api/auth/google/callback', methods=['GET', 'POST'])
 def auth_callback():
-    code = request.json.get('code')  # ✅ Из JSON body
-    redirect_uri = request.json.get('redirect_uri')  # ✅ Из JSON body
+    # ✅ Для GET запроса (от Google) - берём из URL параметров
+    if request.method == 'GET':
+        code = request.args.get('code')
+        redirect_uri = Config.GOOGLE_REDIRECT_URI
+        logger.info(f"📥 GET callback received with code: {code[:20]}...")
+    
+    # ✅ Для POST запроса (от фронтенда) - берём из JSON
+    elif request.method == 'POST':
+        data = request.get_json(force=True)  # force=True игнорирует Content-Type
+        code = data.get('code')
+        redirect_uri = data.get('redirect_uri', Config.GOOGLE_REDIRECT_URI)
+        logger.info(f"📥 POST callback received with code: {code[:20]}...")
 
     if not code:
-        return json_error("No code")
+        return json_error("No code", 400)
 
     try:
         token_url = "https://oauth2.googleapis.com/token"
@@ -280,7 +290,8 @@ def auth_callback():
         t_data = res.json()
 
         if 'error' in t_data:
-            return json_error(t_data.get('error_description', 'Token error'))
+            logger.error(f"❌ Token error: {t_data}")
+            return json_error(t_data.get('error_description', 'Token error'), 400)
 
         # Получаем профиль
         creds = Credentials(token=t_data['access_token'])
@@ -288,7 +299,7 @@ def auth_callback():
         email = user_info.get('email')
 
         if not email:
-            return json_error("No email", 500)
+            return json_error("No email in profile", 500)
 
         # Сохранение токена Google
         save_data = {
@@ -306,7 +317,7 @@ def auth_callback():
 
         save_token(email, save_data)
 
-        logger.info(f"Logged in: {email}")
+        logger.info(f"✅ Logged in: {email}")
 
         # ===== Создаём JWT =====
         jwt_payload = {
@@ -317,7 +328,7 @@ def auth_callback():
 
         token = jwt.encode(jwt_payload, Config.SECRET_KEY, algorithm="HS256")
 
-        # ✅ ВОЗВРАЩАЕМ JSON вместо redirect
+        # Возвращаем JSON для обоих методов
         response_data = {
             'success': True,
             'user': {
@@ -337,10 +348,16 @@ def auth_callback():
             secure=True,
             samesite='Lax'
         )
+        
+        # Для GET от Google - редирект с успехом
+        if request.method == 'GET':
+            logger.info("🔄 Redirecting to frontend after successful auth")
+            return resp
+        
         return resp
 
     except Exception as e:
-        logger.exception("Auth callback failed")
+        logger.exception("❌ Auth callback failed")
         return json_error(str(e), 500)
 
 
