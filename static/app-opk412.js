@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeTelegramWebApp();
   loadTheme();
   loadStorageData();
+  loadUserFromCookie();
   handleOAuthCallback(); // Проверяем callback от Google
   checkAuth();
   initDateSelector();
