@@ -329,24 +329,22 @@ def auth_callback():
 
         token = jwt.encode(jwt_payload, Config.SECRET_KEY, algorithm="HS256")
 
-        # ✅ НОВЫЙ КОД: Для GET от Google - делаем redirect на фронтенд
+        # ✅ Для GET от Google - делаем redirect на фронтенд
         if request.method == 'GET':
             logger.info("🔄 Redirecting to frontend after successful auth")
             response = redirect("https://ct-college-bot.onrender.com/")
             
+            # Устанавливаем JWT token cookie
             response.set_cookie(
                 'token',
                 token,
                 httponly=True,
                 secure=True,
                 samesite='Lax',
-                max_age=7*24*60*60
+                max_age=7*24*60*60  # 7 дней
             )
             
-            # ✅ Используем base64 для безопасного кодирования
-            import json as json_lib
-            import base64
-            
+            # Подготавливаем данные пользователя
             user_data_dict = {
                 'name': user_info.get('name', ''),
                 'email': email,
@@ -354,14 +352,17 @@ def auth_callback():
                 'role': 'admin' if email in Config.ADMIN_EMAILS else 'student'
             }
             
-            # Кодируем в base64
-            user_data_json = json_lib.dumps(user_data_dict)
+            # Кодируем в base64 для безопасной передачи через cookie
+            user_data_json = json.dumps(user_data_dict)
             user_data_b64 = base64.b64encode(user_data_json.encode('utf-8')).decode('ascii')
             
+            logger.info(f"📤 Setting user_data cookie (base64): {user_data_b64[:50]}...")
+            
+            # Устанавливаем user_data cookie (без httponly, чтобы JS мог прочитать)
             response.set_cookie(
                 'user_data', 
                 user_data_b64, 
-                max_age=60,
+                max_age=60,  # 60 секунд - только для передачи данных
                 secure=True, 
                 samesite='Lax'
             )
