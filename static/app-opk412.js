@@ -31,13 +31,8 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeTelegramWebApp();
   loadTheme();
   loadStorageData();
-  
-  // ✅ СНАЧАЛА проверяем cookie (после redirect от Google)
-  if (!loadUserFromCookie()) {
-    // ✅ Потом проверяем callback параметры
-    handleOAuthCallback();
-  }
-  
+  loadUserFromCookie();  // ✅ 
+  handleOAuthCallback();
   checkAuth();
   initDateSelector();
   loadScheduleForCurrentDay();
