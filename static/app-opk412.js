@@ -31,8 +31,13 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeTelegramWebApp();
   loadTheme();
   loadStorageData();
-  loadUserFromCookie();
-  handleOAuthCallback(); // Проверяем callback от Google
+  
+  // ✅ СНАЧАЛА проверяем cookie (после redirect от Google)
+  if (!loadUserFromCookie()) {
+    // ✅ Потом проверяем callback параметры
+    handleOAuthCallback();
+  }
+  
   checkAuth();
   initDateSelector();
   loadScheduleForCurrentDay();
@@ -48,6 +53,35 @@ async function checkBackendHealth() {
   } catch (error) {
     console.error('❌ Backend не запущений! Запустіть: python app.py', error);
   }
+}
+
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
+
+// Читаем user_data из cookie при загрузке
+function loadUserFromCookie() {
+  const userDataCookie = getCookie('user_data');
+  if (userDataCookie) {
+    try {
+      userData = JSON.parse(decodeURIComponent(userDataCookie));
+      isLoggedIn = true;
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+      console.log('✅ Loaded user from cookie:', userData.email);
+      
+      // Удаляем cookie после чтения
+      document.cookie = 'user_data=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      
+      updateProfileView();
+      return true;
+    } catch(e) {
+      console.error('Failed to parse user cookie', e);
+    }
+  }
+  return false;
 }
 
 // ===== OAUTH CALLBACK HANDLER =====
