@@ -91,7 +91,6 @@ function loadUserFromCookie() {
   }
   return false;
 }
-}
 // ===== OAUTH CALLBACK HANDLER =====
 async function handleOAuthCallback() {
   const params = new URLSearchParams(window.location.search);
