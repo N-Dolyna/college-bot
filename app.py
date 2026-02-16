@@ -348,7 +348,7 @@ def auth_callback():
                 'picture': user_info.get('picture', ''),
                 'role': 'admin' if email in Config.ADMIN_EMAILS else 'student'
             })
-            response.set_cookie('user_data', user_data, max_age=7*24*60*60, secure=True, samesite='Lax')
+            response.set_cookie('user_data', user_data, max_age=60, secure=True, samesite='Lax')
             return response
 
         # ✅ Для POST - возвращаем JSON
