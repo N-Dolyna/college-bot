@@ -55,6 +55,9 @@ async function checkBackendHealth() {
   }
 }
 
+// ✅ ===== ДОБАВЬТЕ ЭТИ ДВЕ ФУНКЦИИ СЮДА =====
+
+// Вспомогательная функция для чтения cookie
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -67,24 +70,32 @@ function loadUserFromCookie() {
   const userDataCookie = getCookie('user_data');
   if (userDataCookie) {
     try {
-      // ✅ Декодируем из base64
+      console.log('📥 Raw cookie value:', userDataCookie.substring(0, 50) + '...');
+      
+      // Декодируем из base64
       const decodedJson = atob(userDataCookie);
+      console.log('🔓 Decoded JSON:', decodedJson);
+      
       userData = JSON.parse(decodedJson);
       
       isLoggedIn = true;
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
       console.log('✅ Loaded user from cookie:', userData.email);
       
-      // Удаляем cookie после чтения
+      // Удаляем cookie после чтения (он больше не нужен)
       document.cookie = 'user_data=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       
       updateProfileView();
       return true;
     } catch(e) {
-      console.error('❌ Failed to parse user cookie', e);
+      console.error('❌ Failed to parse user cookie:', e);
+      console.error('Cookie value:', userDataCookie);
     }
+  } else {
+    console.log('ℹ️ No user_data cookie found');
   }
   return false;
+}
 }
 // ===== OAUTH CALLBACK HANDLER =====
 async function handleOAuthCallback() {
