@@ -264,14 +264,14 @@ def auth_callback():
     if request.method == 'GET':
         code = request.args.get('code')
         redirect_uri = Config.GOOGLE_REDIRECT_URI
-        logger.info(f"📥 GET callback received with code: {code[:20]}...")
+        logger.info(f"📥 GET callback received with code: {code[:20] if code else 'None'}...")
     
     # ✅ Для POST запроса (от фронтенда) - берём из JSON
     elif request.method == 'POST':
-        data = request.get_json(force=True)  # force=True игнорирует Content-Type
+        data = request.get_json(force=True)
         code = data.get('code')
         redirect_uri = data.get('redirect_uri', Config.GOOGLE_REDIRECT_URI)
-        logger.info(f"📥 POST callback received with code: {code[:20]}...")
+        logger.info(f"📥 POST callback received with code: {code[:20] if code else 'None'}...")
 
     if not code:
         return json_error("No code", 400)
@@ -328,7 +328,30 @@ def auth_callback():
 
         token = jwt.encode(jwt_payload, Config.SECRET_KEY, algorithm="HS256")
 
-        # Возвращаем JSON для обоих методов
+        # ✅ Для GET от Google - делаем redirect на фронтенд
+        if request.method == 'GET':
+            logger.info("🔄 Redirecting to frontend after successful auth")
+            response = redirect("https://ct-college-bot.onrender.com/")
+            response.set_cookie(
+                'token',
+                token,
+                httponly=True,
+                secure=True,
+                samesite='Lax',
+                max_age=7*24*60*60  # 7 дней
+            )
+            # Сохраняем данные пользователя в cookie для фронтенда
+            import json as json_lib
+            user_data = json_lib.dumps({
+                'name': user_info.get('name', ''),
+                'email': email,
+                'picture': user_info.get('picture', ''),
+                'role': 'admin' if email in Config.ADMIN_EMAILS else 'student'
+            })
+            response.set_cookie('user_data', user_data, max_age=7*24*60*60, secure=True, samesite='Lax')
+            return response
+
+        # ✅ Для POST - возвращаем JSON
         response_data = {
             'success': True,
             'user': {
@@ -346,20 +369,15 @@ def auth_callback():
             token,
             httponly=True,
             secure=True,
-            samesite='Lax'
+            samesite='Lax',
+            max_age=7*24*60*60
         )
-        
-        # Для GET от Google - редирект с успехом
-        if request.method == 'GET':
-            logger.info("🔄 Redirecting to frontend after successful auth")
-            return resp
         
         return resp
 
     except Exception as e:
         logger.exception("❌ Auth callback failed")
         return json_error(str(e), 500)
-
 
 @app.route('/api/auth/check', methods=['GET'])
 def auth_check():
