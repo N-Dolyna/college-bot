@@ -62,7 +62,7 @@ function getCookie(name) {
   return null;
 }
 
-// Читаем user_data из cookie при загрузке
+// Читаем user_data из cookie при загрузке (после redirect от Google)
 function loadUserFromCookie() {
   const userDataCookie = getCookie('user_data');
   if (userDataCookie) {
@@ -72,13 +72,13 @@ function loadUserFromCookie() {
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
       console.log('✅ Loaded user from cookie:', userData.email);
       
-      // Удаляем cookie после чтения
+      // Удаляем cookie после чтения (он больше не нужен)
       document.cookie = 'user_data=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       
       updateProfileView();
       return true;
     } catch(e) {
-      console.error('Failed to parse user cookie', e);
+      console.error('❌ Failed to parse user cookie', e);
     }
   }
   return false;
