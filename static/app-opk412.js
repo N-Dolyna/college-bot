@@ -116,6 +116,27 @@ async function handleOAuthCallback() {
   }
 }
 
+// Читаем user_data из cookie при загрузке
+function loadUserFromCookie() {
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'user_data') {
+      try {
+        userData = JSON.parse(decodeURIComponent(value));
+        isLoggedIn = true;
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+        console.log('✅ Loaded user from cookie:', userData.email);
+        updateProfileView();
+        return true;
+      } catch(e) {
+        console.error('Failed to parse user cookie', e);
+      }
+    }
+  }
+  return false;
+}
+
 // ===== TELEGRAM WEB APP =====
 function initializeTelegramWebApp() {
   if (window.Telegram && window.Telegram.WebApp) {
