@@ -508,7 +508,7 @@ def get_groups_list():
 # =========================================================
 # STARTUP
 # =========================================================
-
+logger.info(__name__)
 if __name__ == '__main__':
     load_tokens()
     reload_schedule_from_excel()
