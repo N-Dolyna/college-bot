@@ -1,9 +1,9 @@
-// ===== CT COLLEGE BOT - ОПК-412 (FULL with admin editor + server sync) =====
+// ===== CT COLLEGE BOT - ОПК-412 =====
 
-// ===== CONFIG =====
+// ===== КОНФІГУРАЦІЯ =====
 const API_BASE = window.location.origin + '/api';;
 
-// ===== STORAGE KEYS =====
+// ===== КЛЮЧІ СХОВИЩА =====
 const STORAGE_KEYS = {
   USER: 'ct_user_opk412',
   SCHEDULE: 'ct_schedule_opk412',
@@ -11,7 +11,7 @@ const STORAGE_KEYS = {
   THEME: 'ct_theme'
 };
 
-// ===== STATE =====
+// ===== СТАН =====
 let isLoggedIn = false;
 let userData = null;
 let scheduleData = {};
@@ -21,17 +21,17 @@ let currentCourseId = null;
 let showOnlySubmittable = true;
 let expandedLessonId = null;
 
-// ===== NOTIFICATIONS =====
+// ===== СПОВІЩЕННЯ =====
 function showNotification(message, type = 'info') {
   console.log(`[${type.toUpperCase()}] ${message}`);
 }
 
-// ===== INITIALIZATION =====
+// ===== ІНІЦІАЛІЗАЦІЯ =====
 document.addEventListener('DOMContentLoaded', function() {
   initializeTelegramWebApp();
   loadTheme();
   loadStorageData();
-  loadUserFromCookie();  // ✅ 
+  loadUserFromCookie();
   handleOAuthCallback();
   checkAuth();
   initDateSelector();
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
   checkBackendHealth();
 });
 
-// ===== BACKEND HEALTH =====
+// ===== ПЕРЕВІРКА БЕКЕНДУ =====
 async function checkBackendHealth() {
   try {
     const response = await fetch(`${API_BASE}/health`);
@@ -50,9 +50,7 @@ async function checkBackendHealth() {
   }
 }
 
-// ✅ ===== ДОБАВЬТЕ ЭТИ ДВЕ ФУНКЦИИ СЮДА =====
-
-// Вспомогательная функция для чтения cookie
+// Допоміжна функція для читання cookie
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -60,14 +58,14 @@ function getCookie(name) {
   return null;
 }
 
-// Читаем user_data из cookie при загрузке (после redirect от Google)
+// Читаємо user_data з cookie при завантаженні (після redirect від Google)
 function loadUserFromCookie() {
   const userDataCookie = getCookie('user_data');
   if (userDataCookie) {
     try {
       console.log('📥 Raw cookie value:', userDataCookie.substring(0, 50) + '...');
       
-      // Декодируем из base64
+      // Декодуємо з base64
       const decodedJson = atob(userDataCookie);
       console.log('🔓 Decoded JSON:', decodedJson);
       
@@ -77,7 +75,7 @@ function loadUserFromCookie() {
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
       console.log('✅ Loaded user from cookie:', userData.email);
       
-      // Удаляем cookie после чтения (он больше не нужен)
+      // Видаляємо cookie після читання (він більше не потрібен)
       document.cookie = 'user_data=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       
       updateProfileView();
@@ -91,18 +89,18 @@ function loadUserFromCookie() {
   }
   return false;
 }
-// ===== OAUTH CALLBACK HANDLER =====
+// ===== ОБРОБНИК OAUTH CALLBACK =====
 async function handleOAuthCallback() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
   const state = params.get('state');
   
-  if (!code) return; // Не callback, обычная загрузка
+  if (!code) return; // Не callback, звичайне завантаження
   
   console.log('🔄 Processing OAuth callback...');
   
   try {
-    // Используем точный redirect_uri, совпадающий с Google Console
+    // Використовуємо точний redirect_uri, що збігається з Google Console
     const redirectUri = `${window.location.origin}/api/auth/google/callback`;
     console.log('📤 Sending to backend:', { code: code.substring(0, 20) + '...', redirectUri });
     
@@ -131,7 +129,7 @@ async function handleOAuthCallback() {
       throw new Error(data.error || 'Auth failed');
     }
     
-    // Сохраняем user данные в localStorage
+    // Зберігаємо дані користувача в localStorage
     userData = {
       name: data.user.name,
       email: data.user.email,
@@ -143,10 +141,10 @@ async function handleOAuthCallback() {
     
     console.log(`✅ Successfully logged in as ${userData.email}`);
     
-    // Очищаем URL от параметров
+    // Очищаємо URL від параметрів
     window.history.replaceState({}, document.title, window.location.pathname);
     
-    // Обновляем UI
+    // Оновлюємо UI
     updateProfileView();
     try { await fetchServerScheduleIfExists(userData.group || 'ОПК-412'); } catch(e){}
   } catch (error) {
@@ -168,7 +166,7 @@ function initializeTelegramWebApp() {
   }
 }
 
-// ===== THEME =====
+// ===== ТЕМА =====
 function loadTheme() {
   const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
   setTheme(savedTheme);
@@ -184,7 +182,7 @@ function toggleTheme() {
   setTheme(current === 'dark' ? 'light' : 'dark');
 }
 
-// ===== STORAGE =====
+// ===== СХОВИЩЕ =====
 function loadStorageData() {
   const savedSchedule = localStorage.getItem(STORAGE_KEYS.SCHEDULE);
   if (savedSchedule) {
@@ -205,7 +203,7 @@ function saveHomeworkData() {
   localStorage.setItem(STORAGE_KEYS.HOMEWORK, JSON.stringify(homeworkData));
 }
 
-// ===== GOOGLE OAUTH (FRONT) =====
+// ===== GOOGLE OAUTH (ФРОНТЕНД) =====
 function initGoogleAuth() {
   const container = document.getElementById('googleSignInBtn');
   if (!container) return;
@@ -218,7 +216,7 @@ function initGoogleAuth() {
 
 async function loginWithGoogle() {
   try {
-    const redirect_uri = `${window.location.origin}/api/auth/google/callback`;  // Автоматически определяет домен
+    const redirect_uri = `${window.location.origin}/api/auth/google/callback`;  // Автоматично визначає домен
     console.log('🔐 Requesting auth URL with redirect_uri:', redirect_uri);
     
     const response = await fetch(`${API_BASE}/auth/google`, {
@@ -243,7 +241,7 @@ async function loginWithGoogle() {
   }
 }
 
-// ===== AUTH STATE SYNC =====
+// ===== СИНХРОНІЗАЦІЯ СТАНУ АВТОРИЗАЦІЇ =====
 async function checkAuth() {
   const savedUser = localStorage.getItem(STORAGE_KEYS.USER);
   if (!savedUser) {
@@ -261,7 +259,7 @@ async function checkAuth() {
       if (j.present) {
         isLoggedIn = true;
         updateProfileView();
-        // если есть серверное расписание для группы — скачиваем его
+        // якщо є серверний розклад для групи — завантажуємо його
         try { await fetchServerScheduleIfExists(userData.group || 'ОПК-412'); } catch(e){}
         return;
       } else {
@@ -282,7 +280,7 @@ async function checkAuth() {
   }
 }
 
-// Попытка получить расписание с сервера (если есть) и заменить local schedule
+// Спроба отримати розклад з сервера (якщо є) та замінити локальний
 async function fetchServerScheduleIfExists(group='ОПК-412') {
   try {
     const resp = await fetch(`${API_BASE}/schedule/group?group=${encodeURIComponent(group)}`);
@@ -299,7 +297,7 @@ async function fetchServerScheduleIfExists(group='ОПК-412') {
   }
 }
 
-// ===== PROFILE UI =====
+// ===== ПРОФІЛЬ КОРИСТУВАЧА =====
 function updateProfileView() {
   const loggedIn = document.getElementById('loggedInProfile');
   const login = document.getElementById('loginProfile');
@@ -338,7 +336,7 @@ function updateProfileView() {
   }
 }
 
-// ===== LOGOUT =====
+// ===== ВИХІД =====
 function logout() {
   if (!isLoggedIn || !userData) {
     localStorage.removeItem(STORAGE_KEYS.USER);
@@ -360,7 +358,7 @@ function logout() {
   });
 }
 
-// ===== GOOGLE CLASSROOM: COURSES / COURSEWORK =====
+// ===== GOOGLE CLASSROOM: КУРСИ / ЗАВДАННЯ =====
 async function loadCourses() {
   if (!isLoggedIn || !userData) { console.log('not logged in'); return; }
   const container = document.getElementById('homeworkContent');
@@ -429,7 +427,7 @@ async function loadAssignmentsForCourse(courseId, courseName='') {
   }
 }
 
-// ===== ADD THIS: loadHomework (restore homework tab behavior) =====
+// ===== ЗАВАНТАЖЕННЯ ДОМАШНІХ ЗАВДАНЬ =====
 function loadHomework() {
   const container = document.getElementById('homeworkContent');
   if (!isLoggedIn || !userData) {
@@ -470,7 +468,7 @@ function loadHomework() {
 }
 try { if (typeof loadHomework === 'function') window.loadHomework = loadHomework; } catch(e){}
 
-// ===== UTILS: parse-local, upload, export schedule =====
+// ===== УТИЛІТИ: парсинг локальний, завантаження, експорт розкладу =====
 async function parseLocalSchedule(){
   try {
     const resp = await fetch(`${API_BASE}/schedule/parse-local`, {method:'POST'});
@@ -487,21 +485,21 @@ async function handleExcelUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
 
-  // Проверка типа файла
+  // Перевірка типу файлу
   if (!file.name.match(/\.(xlsx|xls)$/)) {
-    alert('Пожалуйста, загрузите файл Excel (.xlsx или .xls)');
+    alert('Будь ласка, завантажте файл Excel (.xlsx або .xls)');
     return;
   }
 
   try {
-    showNotification('Загрузка и парсинг файла...', 'info');
+    showNotification('Завантаження та парсинг файлу...', 'info');
     
-    // Создаем FormData для отправки файла
+    // Створюємо FormData для відправки файлу
     const fd = new FormData();
     fd.append('file', file);
     fd.append('group', 'ОПК-412');
 
-    // Отправляем файл на сервер для парсинга
+    // Відправляємо файл на сервер для парсингу
     const resp = await fetch(`${API_BASE}/schedule/upload`, {
       method: 'POST',
       body: fd
@@ -518,68 +516,68 @@ async function handleExcelUpload(e) {
       throw new Error(j.error);
     }
 
-    // Сохраняем распарсенное расписание локально
+    // Зберігаємо розпарсений розклад локально
     scheduleData['ОПК-412'] = j.schedule;
     saveScheduleData();
     loadScheduleForCurrentDay();
     
     showNotification('Розклад успішно завантажено!', 'success');
 
-    // Предлагаем админу сохранить на сервер
+    // Пропонуємо адміну зберегти на сервер
     if (userData && userData.role === 'admin') {
-      if (confirm('Файл успешно загружен и распарсен!\n\nХотите сохранить это расписание на сервере для всех пользователей?\n\n✅ Да - расписание станет доступно всем\n❌ Нет - расписание останется только у вас локально')) {
+      if (confirm('Файл успішно завантажено та розпарсено!\n\nБажаєте зберегти цей розклад на сервері для всіх користувачів?\n\n✅ Так - розклад буде доступний всім\n❌ Ні - розклад залишиться лише у вас локально')) {
         try {
           await saveScheduleToServer();
-          alert('✅ Расписание успешно сохранено на сервере для всех пользователей!');
+          alert('✅ Розклад успішно збережено на сервері для всіх користувачів!');
         } catch (saveErr) {
-          console.error('Ошибка сохранения на сервер:', saveErr);
-          alert('⚠️ Расписание загружено локально, но не удалось сохранить на сервер:\n' + saveErr.message);
+          console.error('Помилка збереження на сервер:', saveErr);
+          alert('⚠️ Розклад завантажено локально, але не вдалося зберегти на сервер:\n' + saveErr.message);
         }
       }
     }
 
-    // Очищаем input для возможности повторной загрузки того же файла
+    // Очищаємо input для можливості повторного завантаження того самого файлу
     e.target.value = '';
 
   } catch (error) {
     console.error('handleExcelUpload error:', error);
     showNotification('Помилка завантаження: ' + error.message, 'error');
-    alert('❌ Ошибка при загрузке файла:\n\n' + error.message + '\n\nПроверьте:\n• Файл в формате .xlsx или .xls\n• Структура файла соответствует ожидаемой\n• Сервер запущен (python app.py)');
+    alert('❌ Помилка при завантаженні файлу:\n\n' + error.message + '\n\nПеревірте:\n• Файл у форматі .xlsx або .xls\n• Структура файлу відповідає очікуваній\n• Сервер запущено (python app.py)');
     
-    // Очищаем input даже при ошибке
+    // Очищаємо input навіть при помилці
     e.target.value = '';
   }
 }
 
-// ===== АЛЬТЕРНАТИВА: КЛИЕНТСКИЙ ПАРСИНГ (если сервер недоступен) =====
-// Эта функция парсит Excel прямо в браузере с помощью SheetJS
+// ===== АЛЬТЕРНАТИВА: КЛІЄНТСЬКИЙ ПАРСИНГ (якщо сервер недоступний) =====
+// Ця функція парсить Excel прямо у браузері за допомогою SheetJS
 
 async function handleExcelUploadClientSide(e) {
   const file = e.target.files[0];
   if (!file) return;
 
   if (!file.name.match(/\.(xlsx|xls)$/)) {
-    alert('Пожалуйста, загрузите файл Excel (.xlsx или .xls)');
+    alert('Будь ласка, завантажте файл Excel (.xlsx або .xls)');
     return;
   }
 
   try {
-    showNotification('Парсинг файла в браузере...', 'info');
+    showNotification('Парсинг файлу у браузері...', 'info');
 
-    // Читаем файл как ArrayBuffer
+    // Читаємо файл як ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
     
-    // Парсим с помощью SheetJS (библиотека уже подключена в HTML)
+    // Парсимо за допомогою SheetJS (бібліотека вже підключена в HTML)
     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
     
-    // Преобразуем в JSON
+    // Перетворюємо на JSON
     const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
     
-    console.log('Данные из Excel:', jsonData);
+    console.log('Дані з Excel:', jsonData);
 
-    // Здесь нужно добавить логику парсинга для вашего формата
-    // Это упрощенный пример - адаптируйте под вашу структуру
+    // Тут потрібно додати логіку парсингу для вашого формату
+    // Це спрощений приклад - адаптуйте під свою структуру
     const schedule = parseScheduleFromData(jsonData);
 
     scheduleData['ОПК-412'] = schedule;
@@ -589,7 +587,7 @@ async function handleExcelUploadClientSide(e) {
     showNotification('Розклад завантажено!', 'success');
 
     if (userData && userData.role === 'admin') {
-      if (confirm('Хотите сохранить на сервере?')) {
+      if (confirm('Бажаєте зберегти на сервері?')) {
         await saveScheduleToServer();
       }
     }
@@ -599,32 +597,25 @@ async function handleExcelUploadClientSide(e) {
   } catch (error) {
     console.error('Client-side parsing error:', error);
     showNotification('Помилка: ' + error.message, 'error');
-    alert('❌ Ошибка парсинга файла:\n' + error.message);
+    alert('❌ Помилка парсингу файлу:\n' + error.message);
     e.target.value = '';
   }
 }
 
-// Вспомогательная функция для парсинга данных
+// Допоміжна функція для парсингу даних
 function parseScheduleFromData(data) {
-  // Это пример - адаптируйте под вашу структуру Excel
-  const schedule = [[], [], [], [], []]; // 5 дней недели
+  // Це приклад - адаптуйте під свою структуру Excel
+  const schedule = [[], [], [], [], []]; // 5 днів тижня
   
-  // Здесь должна быть логика парсинга вашего формата
-  // Например, если в столбце 57 находится ваша группа:
-  // data.forEach((row, index) => {
-  //   if (row[57]) { // столбец 57 (индекс 56)
-  //     // парсим урок
-  //   }
-  // });
+  // Тут потрібно додати логіку парсингу для вашого формату
   
   return schedule;
 }
 
-// ===== ДОБАВЬТЕ ЭТУ ФУНКЦИЮ ДЛЯ УЛУЧШЕННЫХ УВЕДОМЛЕНИЙ =====
 function showNotification(message, type = 'info') {
   console.log(`[${type.toUpperCase()}] ${message}`);
   
-  // Создаем визуальное уведомление
+  // Створюємо візуальне сповіщення
   const notification = document.createElement('div');
   notification.style.position = 'fixed';
   notification.style.top = '80px';
@@ -636,7 +627,7 @@ function showNotification(message, type = 'info') {
   notification.style.maxWidth = '400px';
   notification.style.animation = 'slideIn 0.3s ease-out';
   
-  // Стили в зависимости от типа
+  // Стилі залежно від типу
   const styles = {
     'success': { bg: '#34C759', icon: '✅' },
     'error': { bg: '#FF3B30', icon: '❌' },
@@ -651,14 +642,14 @@ function showNotification(message, type = 'info') {
   
   document.body.appendChild(notification);
   
-  // Удаляем через 3 секунды
+  // Видаляємо через 3 секунди
   setTimeout(() => {
     notification.style.animation = 'slideOut 0.3s ease-in';
     setTimeout(() => notification.remove(), 300);
   }, 3000);
 }
 
-// CSS анимации (добавьте в <head> или в стили)
+// CSS анімації
 const style = document.createElement('style');
 style.textContent = `
   @keyframes slideIn {
@@ -692,7 +683,7 @@ function exportSchedule(){
   const a = document.createElement('a'); a.href = url; a.download = 'schedule-opk412.json'; a.click(); URL.revokeObjectURL(url);
 }
 
-// ===== SCHEDULE / LESSONS (expandable + meeting links) =====
+// ===== РОЗКЛАД / ЗАНЯТТЯ (розгортання + посилання на конференції) =====
 function extractMeetingLink(lesson) {
   if (!lesson) return null;
   const candidates = [];
@@ -802,7 +793,7 @@ function toggleLessonExpand(lessonId) {
   if (hidden) try { panel.scrollIntoView({behavior:'smooth', block:'center'}); } catch(e){}
 }
 
-// ===== NAV FIX (override inline onclick) =====
+// ===== ВИПРАВЛЕННЯ НАВІГАЦІЇ (перевизначення inline onclick) =====
 (function overrideBottomNavHandlers(){
   function activate(tab){
     document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
@@ -823,10 +814,10 @@ function toggleLessonExpand(lessonId) {
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
 
-// ===== ADMIN: editor UI + saving to server =====
+// ===== АДМІН: редактор UI + збереження на сервер =====
 async function openScheduleLinkEditor(group='ОПК-412') {
   try {
-    // fetch schedule from server if exists, else use local
+    // отримуємо розклад з сервера, якщо є, інакше локальний
     let schedule = scheduleData[group] || [];
     try {
       const resp = await fetch(`${API_BASE}/schedule/group?group=${encodeURIComponent(group)}`);
@@ -838,7 +829,7 @@ async function openScheduleLinkEditor(group='ОПК-412') {
       console.warn('Server schedule fetch failed', e);
     }
 
-    // render modal
+    // відображаємо модальне вікно
     renderScheduleEditor(group, schedule);
   } catch (e) {
     console.error('openScheduleLinkEditor', e);
@@ -847,7 +838,7 @@ async function openScheduleLinkEditor(group='ОПК-412') {
 }
 
 function renderScheduleEditor(group, schedule) {
-  // remove existing
+  // видаляємо існуючий
   const old = document.getElementById('schedule-editor');
   if (old) old.remove();
 
@@ -878,7 +869,7 @@ function renderScheduleEditor(group, schedule) {
   `;
   document.body.appendChild(overlay);
 
-  // Закрытие при клике на затемнённый фон (НО НЕ на само модальное окно)
+  // Закриття при кліку на затемнений фон (АЛЕ НЕ на само модальне вікно)
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) {
       overlay.remove();
@@ -891,7 +882,7 @@ function renderScheduleEditor(group, schedule) {
   };
   document.getElementById('saveEditorBtn').onclick = (e) => {
     e.stopPropagation();
-    // gather edited schedule from DOM
+    // збираємо відредагований розклад з DOM
     const newSchedule = readScheduleFromEditor();
     scheduleData[group] = newSchedule;
     saveScheduleData();
@@ -911,7 +902,7 @@ function renderScheduleEditor(group, schedule) {
     }
   };
 
-  // build editor body: days and lessons
+  // будуємо тіло редактора: дні та заняття
   const body = document.getElementById('schedule-editor-body');
   const days = ['Понеділок','Вівторок','Середа','Четвер','П\'ятниця'];
   body.innerHTML = '';
@@ -941,7 +932,7 @@ function renderScheduleEditor(group, schedule) {
     body.appendChild(dayDiv);
   }
 
-  // apply buttons behavior: update underlying schedule variable (in DOM)
+  // поведінка кнопок застосування: оновлюємо змінну розкладу (в DOM)
   body.querySelectorAll('.editor-apply-btn').forEach(btn => {
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation();
@@ -960,12 +951,12 @@ function renderScheduleEditor(group, schedule) {
 }
 
 function readScheduleFromEditor() {
-  // read values from DOM
+  // читаємо значення з DOM
   const body = document.getElementById('schedule-editor-body');
   if (!body) return scheduleData['ОПК-412'] || [];
-  // reconstruct by scanning inputs
+  // реконструюємо, скануючи inputs
   const inputs = Array.from(body.querySelectorAll('.editor-link-input'));
-  // clone existing schedule to preserve fields
+  // клонуємо існуючий розклад для збереження полів
   const group = 'ОПК-412';
   const base = (scheduleData[group] && Array.isArray(scheduleData[group])) ? JSON.parse(JSON.stringify(scheduleData[group])) : [[],[],[],[],[]];
   inputs.forEach(inp => {
@@ -1001,9 +992,9 @@ async function saveScheduleToServer(group='ОПК-412') {
   return j;
 }
 
-// ===== SCHEDULE EDITOR HELPER END =====
+// ===== КІНЕЦЬ РЕДАКТОРА РОЗКЛАДУ =====
 
-// ===== DATE SELECTOR =====
+// ===== ВИБІР ДАТИ =====
 function initDateSelector(){
   const days = ['Понеділок','Вівторок','Середа','Четвер','П\'ятниця'];
   const daysShort = ['Пн','Вт','Ср','Чт','Пт'];
@@ -1020,7 +1011,7 @@ function initDateSelector(){
 }
 function loadScheduleForCurrentDay(){ const today = new Date(); const d = today.getDay(); const idx = (d>=1 && d<=5)? d-1 : 0; loadScheduleForDay(idx); }
 
-// ===== SAFETY EXPORTS =====
+// ===== БЕЗПЕЧНИЙ ЕКСПОРТ =====
 try {
   if (typeof switchTab === 'function') window.switchTab = switchTab;
   if (typeof loadHomework === 'function') window.loadHomework = loadHomework;

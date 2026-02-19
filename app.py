@@ -1,5 +1,5 @@
 # =========================================================
-# app.py — CT College Bot Backend (Strict Config Edition)
+# app.py — CT College Bot Backend
 # =========================================================
 
 import os
@@ -16,7 +16,7 @@ from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import Flask, request, jsonify, session, redirect
 from flask_cors import CORS
-# Google Auth Libraries
+# Бібліотеки Google Auth
 try:
     from google.oauth2.credentials import Credentials
     from google_auth_oauthlib.flow import Flow
@@ -26,15 +26,15 @@ try:
 except ImportError:
     GOOGLE_LIBS_AVAILABLE = False
 
-# Local modules
+# Локальні модулі
 
 from schedule_parser import parse_schedule_file, extractGroups, load_workbook
 
 # =========================================================
-# 1. LOGGING & ENV
+# 1. ЛОГУВАННЯ ТА ОТОЧЕННЯ
 # =========================================================
 
-# Логирование: Файл + Консоль
+# Логування: файл + консоль
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
@@ -45,7 +45,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Загрузка .env (если есть библиотека python-dotenv)
+# Завантаження .env (якщо є бібліотека python-dotenv)
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -53,30 +53,30 @@ except ImportError:
     logger.warning("⚠️ python-dotenv not installed. Reading variables directly from OS environment.")
 
 # =========================================================
-# 2. STRICT CONFIGURATION
+# 2. СУВОРА КОНФІГУРАЦІЯ
 # =========================================================
 
 class Config:
-    # 1. Секреты (Обязательны)
+    # 1. Секрети (Обов'язкові)
     GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
     GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
     
-    # 2. Настройки окружения (Обязательны)
+    # 2. Налаштування оточення (Обов'язкові)
     GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI')
     SECRET_KEY = os.getenv('SECRET_KEY')
-    # 3. Списки (Обязательны, парсим из строки)
+    # 3. Списки (Обов'язкові, парсимо з рядка)
     _admins = os.getenv('ADMIN_EMAILS', '')
     ADMIN_EMAILS = [e.strip() for e in _admins.split(',')] if _admins else []
 
     _cors = os.getenv('ALLOWED_CORS', '')
     ALLOWED_CORS = [o.strip() for o in _cors.split(',')] if _cors else []
     
-    # 4. Файлы (Константы)
+    # 4. Файли (Константи)
     SCHEDULE_FILE = 'schedule_source.xlsx' 
     TOKENS_FILE = 'user_tokens.json'
     MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10 MB
 
-# ВАЛИДАЦИЯ КОНФИГУРАЦИИ ПРИ СТАРТЕ
+# ВАЛІДАЦІЯ КОНФІГУРАЦІЇ ПРИ СТАРТІ
 def validate_config():
     missing = []
     if not Config.SECRET_KEY: missing.append("SECRET_KEY")
@@ -88,7 +88,7 @@ def validate_config():
     if missing:
         logger.critical(f"❌ CRITICAL: Missing environment variables: {', '.join(missing)}")
         logger.critical("❌ Please create a .env file or set these variables.")
-        sys.exit(1) # Жесткий выход, если конфиг битый
+        sys.exit(1) # Жорсткий вихід, якщо конфіг зламано
 
 validate_config()
 
@@ -103,7 +103,7 @@ CORS(app,
      expose_headers=['Content-Type'])
 
 # =========================================================
-# 3. STORAGE (JSON + Locks)
+# 3. ЗБЕРІГАННЯ (JSON + блокування)
 # =========================================================
 
 USER_TOKENS_CACHE = {} 
@@ -144,7 +144,7 @@ def delete_token(email):
             atomic_write_json(Config.TOKENS_FILE, USER_TOKENS_CACHE)
 
 # =========================================================
-# 4. SCHEDULE LOGIC (In-Memory)
+# 4. ЛОГІКА РОЗКЛАДУ (в пам'яті)
 # =========================================================
 
 def reload_schedule_from_excel():
@@ -155,7 +155,7 @@ def reload_schedule_from_excel():
 
     try:
         logger.info(f"📂 Parsing {Config.SCHEDULE_FILE}...")
-        # 57 - индекс для ОПК-412
+        # 57 - індекс для ОПК-412
         parsed_data = parse_schedule_file(Config.SCHEDULE_FILE, 57) 
         SCHEDULE_CACHE['ОПК-412'] = parsed_data
         logger.info("✅ Schedule loaded into memory.")
@@ -163,7 +163,7 @@ def reload_schedule_from_excel():
         logger.error(f"❌ Schedule parsing error: {e}")
 
 # =========================================================
-# 5. HELPERS
+# 5. ДОПОМІЖНІ ФУНКЦІЇ
 # =========================================================
 
 def json_error(msg, status=400):
@@ -201,22 +201,19 @@ def get_google_creds(email):
         return None
 
 # =========================================================
-# 6. API ROUTES
+# 6. API МАРШРУТИ
 # =========================================================
 
 @app.route('/')
 def index():
-    """Serve the main frontend page"""
     return app.send_static_file('index.html')
 
 @app.route('/app-opk412.js')
 def serve_js():
-    """Serve JavaScript file"""
     return app.send_static_file('app-opk412.js')
 
 @app.route('/manifest.json')
 def serve_manifest():
-    """Serve manifest file"""
     return app.send_static_file('manifest.json')
 
 @app.route('/api/health', methods=['GET'])
@@ -227,7 +224,7 @@ def health():
         'schedule_loaded': 'ОПК-412' in SCHEDULE_CACHE
     })
 
-# --- AUTH ---
+# --- АВТЕНТИФІКАЦІЯ ---
 @app.route('/api/auth/google', methods=['POST'])
 @require_google_auth
 def auth_init():
@@ -261,13 +258,13 @@ def auth_init():
 
 @app.route('/api/auth/google/callback', methods=['GET', 'POST'])
 def auth_callback():
-    # ✅ Для GET запроса (от Google) - берём из URL параметров
+    # ✅ Для GET запиту (від Google) - беремо з URL параметрів
     if request.method == 'GET':
         code = request.args.get('code')
         redirect_uri = Config.GOOGLE_REDIRECT_URI
         logger.info(f"📥 GET callback received with code: {code[:20] if code else 'None'}...")
     
-    # ✅ Для POST запроса (от фронтенда) - берём из JSON
+    # ✅ Для POST запиту (від фронтенду) - беремо з JSON
     elif request.method == 'POST':
         data = request.get_json(force=True)
         code = data.get('code')
@@ -294,7 +291,7 @@ def auth_callback():
             logger.error(f"❌ Token error: {t_data}")
             return json_error(t_data.get('error_description', 'Token error'), 400)
 
-        # Получаем профиль
+        # Отримуємо профіль
         creds = Credentials(token=t_data['access_token'])
         user_info = build('oauth2', 'v2', credentials=creds).userinfo().get().execute()
         email = user_info.get('email')
@@ -302,7 +299,7 @@ def auth_callback():
         if not email:
             return json_error("No email in profile", 500)
 
-        # Сохранение токена Google
+        # Збереження токена Google
         save_data = {
             'token': t_data['access_token'],
             'refresh_token': t_data.get('refresh_token'),
@@ -320,7 +317,7 @@ def auth_callback():
 
         logger.info(f"✅ Logged in: {email}")
 
-        # ===== Создаём JWT =====
+        # ===== Створюємо JWT =====
         jwt_payload = {
             "email": email,
             "role": "admin" if email in Config.ADMIN_EMAILS else "student",
@@ -329,22 +326,22 @@ def auth_callback():
 
         token = jwt.encode(jwt_payload, Config.SECRET_KEY, algorithm="HS256")
 
-        # ✅ Для GET от Google - делаем redirect на фронтенд
+        # ✅ Для GET від Google - робимо redirect на фронтенд
         if request.method == 'GET':
             logger.info("🔄 Redirecting to frontend after successful auth")
             response = redirect("https://ct-college-bot.onrender.com/")
             
-            # Устанавливаем JWT token cookie
+            # Встановлюємо cookie з JWT токеном
             response.set_cookie(
                 'token',
                 token,
                 httponly=True,
                 secure=True,
                 samesite='Lax',
-                max_age=7*24*60*60  # 7 дней
+                max_age=7*24*60*60  # 7 днів
             )
             
-            # Подготавливаем данные пользователя
+            # Підготовлюємо дані користувача
             user_data_dict = {
                 'name': user_info.get('name', ''),
                 'email': email,
@@ -352,24 +349,24 @@ def auth_callback():
                 'role': 'admin' if email in Config.ADMIN_EMAILS else 'student'
             }
             
-            # Кодируем в base64 для безопасной передачи через cookie
+            # Кодуємо в base64 для безпечної передачі через cookie
             user_data_json = json.dumps(user_data_dict)
             user_data_b64 = base64.b64encode(user_data_json.encode('utf-8')).decode('ascii')
             
             logger.info(f"📤 Setting user_data cookie (base64): {user_data_b64[:50]}...")
             
-            # Устанавливаем user_data cookie (без httponly, чтобы JS мог прочитать)
+            # Встановлюємо cookie user_data (без httponly, щоб JS міг прочитати)
             response.set_cookie(
                 'user_data', 
                 user_data_b64, 
-                max_age=60,  # 60 секунд - только для передачи данных
+                max_age=60,  # 60 секунд - тільки для передачі даних
                 secure=True, 
                 samesite='Lax'
             )
             
             return response
 
-        # ✅ Для POST - возвращаем JSON
+        # ✅ Для POST - повертаємо JSON
         response_data = {
             'success': True,
             'user': {
@@ -471,7 +468,7 @@ def get_schedule():
 
 @app.route('/api/schedule/save', methods=['POST'])
 def save_schedule_manual():
-    # Админ сохраняет правки в память
+    # Адмін зберігає правки в пам'ять
     data = request.json or {}
     uid = data.get('userId')
     grp = data.get('group')
@@ -484,7 +481,7 @@ def save_schedule_manual():
 
 @app.route('/api/schedule/upload', methods=['POST'])
 def upload_schedule():
-    # Админ грузит файл
+    # Адмін завантажує файл
     if 'file' not in request.files: return json_error("No file")
     f = request.files['file']
     if not f.filename.endswith(('.xlsx', '.xls')): return json_error("Invalid file")
@@ -506,9 +503,8 @@ def get_groups_list():
         return json_error(str(e), 500)
 
 # =========================================================
-# STARTUP
+# ЗАПУСК
 # =========================================================
-logger.error(__name__)
 if __name__ == '__main__':
     load_tokens()
     reload_schedule_from_excel()
