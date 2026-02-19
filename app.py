@@ -451,6 +451,7 @@ def get_coursework():
                 'status': status,
                 'maxPoints': work.get('maxPoints'),
                 'deadline': dt.isoformat() if dd else None
+                'alternateLink': work.get('alternateLink')
             })
         return jsonify({'success': True, 'assignments': out})
     except Exception as e:
