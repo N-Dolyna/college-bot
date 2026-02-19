@@ -450,7 +450,7 @@ def get_coursework():
                 'description': work.get('description'),
                 'status': status,
                 'maxPoints': work.get('maxPoints'),
-                'deadline': dt.isoformat() if dd else None
+                'deadline': dt.isoformat() if dd else None,
                 'alternateLink': work.get('alternateLink')
             })
         return jsonify({'success': True, 'assignments': out})
