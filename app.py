@@ -27,7 +27,7 @@ except ImportError:
     GOOGLE_LIBS_AVAILABLE = False
 
 # Local modules
-# ВАЖНО: Физически переименуй huy.xlsx -> schedule_source.xlsx
+
 from schedule_parser import parse_schedule_file, extractGroups, load_workbook
 
 # =========================================================
