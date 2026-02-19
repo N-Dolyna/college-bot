@@ -730,7 +730,10 @@ function loadScheduleForDay(dayIndex) {
     const desc = lesson.description? String(lesson.description) : '';
     const shortDesc = desc.length>200? desc.slice(0,200)+'…': desc;
     const showRoom = lesson.room && lesson.room !== 'Не вказано';
-    html += `<div class="lesson-card" id="${id}" data-lesson-id="${id}" style="cursor:pointer;">
+    const typeClass = lesson.type === 'Лекція' ? 'type-lecture' :
+                      lesson.type === 'Практика' ? 'type-practice' :
+                      lesson.type === 'Лабораторна' ? 'type-lab' : '';
+    html += `<div class="lesson-card${typeClass ? ' '+typeClass : ''}" id="${id}" data-lesson-id="${id}" style="cursor:pointer;">
       <div class="lesson-main" data-lesson-id="${id}" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
         <div style="flex:1;">
           <div class="lesson-header" style="display:flex;justify-content:space-between;align-items:center;">
