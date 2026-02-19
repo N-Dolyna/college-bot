@@ -30,6 +30,10 @@
             /* Vibrant multi-color palette */
             --primary: #8B5CF6;
             --primary-gradient: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
+            --gradient-purple: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+            --gradient-pink: linear-gradient(135deg, #EC4899 0%, #F472B6 100%);
+            --gradient-orange: linear-gradient(135deg, #F97316 0%, #FB923C 100%);
+            --gradient-blue: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
             --gradient-purple-pink: linear-gradient(135deg, #8B5CF6, #EC4899);
             --gradient-pink-orange: linear-gradient(135deg, #EC4899, #F97316);
             --gradient-blue-purple: linear-gradient(135deg, #3B82F6, #8B5CF6);
@@ -79,10 +83,41 @@
             --shadow-lg: 0 8px 32px rgba(139, 92, 246, 0.3);
         }
 
+        [data-theme="dark"] .lesson-card { box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.15), 0 4px 24px rgba(139, 92, 246, 0.12); }
+        [data-theme="dark"] .lesson-card.type-lecture { box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.2), 0 4px 24px rgba(139, 92, 246, 0.18); }
+        [data-theme="dark"] .lesson-card.type-practice { box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.2), 0 4px 24px rgba(249, 115, 22, 0.15); }
+        [data-theme="dark"] .lesson-card.type-lab { box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2), 0 4px 24px rgba(59, 130, 246, 0.15); }
+        [data-theme="dark"] .btn-primary { box-shadow: 0 4px 20px rgba(139, 92, 246, 0.5), 0 0 40px rgba(236, 72, 153, 0.2); }
+        [data-theme="dark"] .logo-icon { box-shadow: 0 4px 20px rgba(139, 92, 246, 0.6), 0 0 30px rgba(236, 72, 153, 0.3); }
+
         @keyframes gradientShift {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
+        }
+
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes color-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        @keyframes rainbow-border {
+            0% { border-color: #8B5CF6; }
+            25% { border-color: #EC4899; }
+            50% { border-color: #F97316; }
+            75% { border-color: #3B82F6; }
+            100% { border-color: #8B5CF6; }
+        }
+
+        .animated-gradient {
+            background-size: 200% 200%;
+            animation: gradient-animation 3s ease infinite;
         }
 
         @keyframes fadeSlideIn {
@@ -285,21 +320,21 @@
         /* Per-day color variables */
         .date-btn:nth-child(1) { --day-color: #8B5CF6; --day-shadow: rgba(139, 92, 246, 0.25); --day-glow: rgba(139, 92, 246, 0.4); --day-active-bg: linear-gradient(135deg, #8B5CF6, #A78BFA); }
         .date-btn:nth-child(2) { --day-color: #EC4899; --day-shadow: rgba(236, 72, 153, 0.25); --day-glow: rgba(236, 72, 153, 0.4); --day-active-bg: linear-gradient(135deg, #EC4899, #F472B6); }
-        .date-btn:nth-child(3) { --day-color: #3B82F6; --day-shadow: rgba(59, 130, 246, 0.25); --day-glow: rgba(59, 130, 246, 0.4); --day-active-bg: linear-gradient(135deg, #3B82F6, #60A5FA); }
-        .date-btn:nth-child(4) { --day-color: #F97316; --day-shadow: rgba(249, 115, 22, 0.25); --day-glow: rgba(249, 115, 22, 0.4); --day-active-bg: linear-gradient(135deg, #F97316, #FB923C); }
+        .date-btn:nth-child(3) { --day-color: #F97316; --day-shadow: rgba(249, 115, 22, 0.25); --day-glow: rgba(249, 115, 22, 0.4); --day-active-bg: linear-gradient(135deg, #F97316, #FB923C); }
+        .date-btn:nth-child(4) { --day-color: #3B82F6; --day-shadow: rgba(59, 130, 246, 0.25); --day-glow: rgba(59, 130, 246, 0.4); --day-active-bg: linear-gradient(135deg, #3B82F6, #60A5FA); }
         .date-btn:nth-child(5) { --day-color: #10B981; --day-shadow: rgba(16, 185, 129, 0.25); --day-glow: rgba(16, 185, 129, 0.4); --day-active-bg: linear-gradient(135deg, #10B981, #34D399); }
 
         /* Per-day color coding */
         .date-btn:nth-child(1):hover { border-color: #8B5CF6; box-shadow: 0 4px 16px rgba(139, 92, 246, 0.25); }
         .date-btn:nth-child(2):hover { border-color: #EC4899; box-shadow: 0 4px 16px rgba(236, 72, 153, 0.25); }
-        .date-btn:nth-child(3):hover { border-color: #3B82F6; box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25); }
-        .date-btn:nth-child(4):hover { border-color: #F97316; box-shadow: 0 4px 16px rgba(249, 115, 22, 0.25); }
+        .date-btn:nth-child(3):hover { border-color: #F97316; box-shadow: 0 4px 16px rgba(249, 115, 22, 0.25); }
+        .date-btn:nth-child(4):hover { border-color: #3B82F6; box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25); }
         .date-btn:nth-child(5):hover { border-color: #10B981; box-shadow: 0 4px 16px rgba(16, 185, 129, 0.25); }
 
         .date-btn:nth-child(1).active { background: linear-gradient(135deg, #8B5CF6, #A78BFA); box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4); }
         .date-btn:nth-child(2).active { background: linear-gradient(135deg, #EC4899, #F472B6); box-shadow: 0 4px 16px rgba(236, 72, 153, 0.4); }
-        .date-btn:nth-child(3).active { background: linear-gradient(135deg, #3B82F6, #60A5FA); box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4); }
-        .date-btn:nth-child(4).active { background: linear-gradient(135deg, #F97316, #FB923C); box-shadow: 0 4px 16px rgba(249, 115, 22, 0.4); }
+        .date-btn:nth-child(3).active { background: linear-gradient(135deg, #F97316, #FB923C); box-shadow: 0 4px 16px rgba(249, 115, 22, 0.4); }
+        .date-btn:nth-child(4).active { background: linear-gradient(135deg, #3B82F6, #60A5FA); box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4); }
         .date-btn:nth-child(5).active { background: linear-gradient(135deg, #10B981, #34D399); box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4); }
 
         .date-btn.active {
@@ -372,6 +407,15 @@
         .lesson-card:nth-child(3n+1)::before { background: var(--gradient-purple-pink); }
         .lesson-card:nth-child(3n+2)::before { background: var(--gradient-teal-blue); }
         .lesson-card:nth-child(3n+3)::before { background: var(--gradient-pink-orange); }
+
+        /* Color-code lesson cards and badges by lesson type */
+        .lesson-card.type-lecture::before { background: var(--gradient-purple); }
+        .lesson-card.type-practice::before { background: var(--gradient-orange); }
+        .lesson-card.type-lab::before { background: var(--gradient-blue); }
+
+        .lesson-card.type-lecture .lesson-type { background: var(--gradient-purple); box-shadow: 0 2px 8px rgba(139, 92, 246, 0.35); }
+        .lesson-card.type-practice .lesson-type { background: var(--gradient-orange); box-shadow: 0 2px 8px rgba(249, 115, 22, 0.35); }
+        .lesson-card.type-lab .lesson-type { background: var(--gradient-blue); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35); }
 
         .lesson-card:hover {
             transform: translateX(6px);
@@ -612,8 +656,9 @@
         }
 
         .btn-primary {
-            background: var(--gradient-purple-pink);
+            background: var(--gradient-rainbow);
             background-size: 200% 200%;
+            animation: gradient-animation 3s ease infinite;
             color: white;
             box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
         }
