@@ -437,12 +437,31 @@ def get_coursework():
         out = []
         for work in res.get('courseWork', []):
             if submittable and work.get('workType') == 'MATERIAL': continue
-            
+
             status = 'pending'
+            try:
+                submissions = srv.courses().courseWork().studentSubmissions().list(
+                    courseId=cid,
+                    courseWorkId=work['id'],
+                    userId='me'
+                ).execute()
+                if submissions.get('studentSubmissions'):
+                    submission_state = submissions['studentSubmissions'][0].get('state')
+                    if submission_state == 'TURNED_IN':
+                        status = 'submitted'
+                    elif submission_state == 'RETURNED':
+                        status = 'graded'
+                    elif submission_state == 'CREATED':
+                        status = 'draft'
+            except Exception as e:
+                logger.warning(f"Could not get submission status for {work['id']}: {e}")
+
             dd = work.get('dueDate')
+            dt = None
             if dd:
                 dt = datetime(dd['year'], dd['month'], dd['day'])
-                if dt < datetime.now(): status = 'overdue'
+                if dt < datetime.now() and status == 'pending':
+                    status = 'overdue'
 
             out.append({
                 'id': work['id'],
@@ -450,7 +469,7 @@ def get_coursework():
                 'description': work.get('description'),
                 'status': status,
                 'maxPoints': work.get('maxPoints'),
-                'deadline': dt.isoformat() if dd else None,
+                'deadline': dt.isoformat() if dt else None,
                 'alternateLink': work.get('alternateLink')
             })
         return jsonify({'success': True, 'assignments': out})
