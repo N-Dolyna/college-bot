@@ -23,49 +23,6 @@
     <link rel="stylesheet" href="animations.css">
 </head>
 <body>
-    <script>
-        // OAuth callback handler (как у вас сейчас)
-        (function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const code = urlParams.get('code');
-            if (code) {
-                console.log('🔄 Обнаружен OAuth code, обработка...');
-                fetch('http://localhost:5000/api/auth/google/callback', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: code })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        console.error('❌ Ошибка:', data.error);
-                        alert('Помилка авторизації: ' + (data.error_description || data.error || JSON.stringify(data)));
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                        return;
-                    }
-                    console.log('✅ Авторизация успешна:', data.user);
-                    const userData = {
-                        name: data.user.name,
-                        email: data.user.email,
-                        picture: data.user.picture,
-                        group: 'ОПК-412',
-                        role: (data.user.email.endsWith('@kpi.edu.ua') || data.user.email === 'nikdolyna@gmail.com') ? 'admin' : 'student',
-                        googleId: data.user.email
-                    };
-                    localStorage.setItem('ct_user_opk412', JSON.stringify(userData));
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    alert('Успішно авторизовано! Сторінка буде перезавантажена.');
-                    window.location.reload();
-                })
-                .catch(error => {
-                    console.error('❌ Ошибка:', error);
-                    alert('Помилка: ' + error.message);
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                });
-            }
-        })();
-    </script>
-
     <div class="geometric-bg"></div>
 
     <!-- Header -->
