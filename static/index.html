@@ -16,6 +16,9 @@
     <!-- SheetJS для парсингу Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
     <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
@@ -29,13 +32,17 @@
     <div class="header">
         <div class="header-content">
             <div class="logo-section">
-                <div class="logo-icon">CT</div>
+                <div class="logo-icon">
+                    <i data-lucide="graduation-cap"></i>
+                </div>
                 <div class="logo-text">
                     <h1>CT College Bot</h1>
                     <div class="current-info" id="currentInfo">Група ОПК-412</div>
                 </div>
             </div>
-            <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">🌙</button>
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
+                <i data-lucide="moon" id="themeIcon"></i>
+            </button>
         </div>
     </div>
 
@@ -95,28 +102,28 @@
     <!-- Кнопки действий -->
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;">
         <button class="btn btn-secondary" onclick="document.getElementById('excelFile').click()">
-            📂 Вибрати файл
+            <i data-lucide="folder-open"></i> Вибрати файл
         </button>
         
         <button class="btn btn-primary" onclick="openScheduleLinkEditor()">
-            ✏️ Редагувати
+            <i data-lucide="edit"></i> Редагувати
         </button>
     </div>
 
     <button class="btn btn-secondary" style="width: 100%; margin-top: 12px;" onclick="parseLocalSchedule()">
-        📁 Завантажити з huy.xlsx
+        <i data-lucide="file-spreadsheet"></i> Завантажити з huy.xlsx
     </button>
 
     <button class="btn btn-secondary" id="saveServerBtn" style="width:100%; margin-top:12px;" onclick="saveScheduleToServer()">
-        💾 Зберегти на сервер (admin)
+        <i data-lucide="save"></i> Зберегти на сервер (admin)
     </button>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
         <button class="btn btn-primary" onclick="viewParsedSchedule()">
-            👁️ Переглянути
+            <i data-lucide="eye"></i> Переглянути
         </button>
         <button class="btn btn-secondary" onclick="exportSchedule()">
-            📥 Експорт JSON
+            <i data-lucide="download"></i> Експорт JSON
         </button>
     </div>
 </div>
@@ -253,7 +260,9 @@ function viewParsedSchedule() {
 
                 <div id="loginProfile">
                     <div class="auth-container">
-                        <div class="auth-icon">🔐</div>
+                <div class="auth-icon">
+                    <i data-lucide="lock-keyhole"></i>
+                </div>
                         <h2>Вхід до системи</h2>
                         <p>Увійдіть через Google для доступу до розкладу та завдань</p>
                         <div id="googleSignInBtn"></div>
@@ -265,19 +274,25 @@ function viewParsedSchedule() {
 
     <div class="bottom-nav">
         <a class="nav-item active" onclick="switchTab('schedule')">
-            <div class="nav-icon">📅</div>
+            <div class="nav-icon"><i data-lucide="calendar"></i></div>
             <div class="nav-label">Розклад</div>
         </a>
         <a class="nav-item" onclick="switchTab('homework')">
-            <div class="nav-icon">📚</div>
+            <div class="nav-icon"><i data-lucide="book-open"></i></div>
             <div class="nav-label">Завдання</div>
         </a>
         <a class="nav-item" onclick="switchTab('profile')">
-            <div class="nav-icon">👤</div>
+            <div class="nav-icon"><i data-lucide="user"></i></div>
             <div class="nav-label">Профіль</div>
         </a>
     </div>
 
     <script src="app-opk412.js?v=2"></script>
+    <script>
+        // Initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
 </body>
 </html>

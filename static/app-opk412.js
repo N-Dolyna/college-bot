@@ -173,8 +173,11 @@ function loadTheme() {
 }
 function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
-  const themeToggle = document.getElementById('themeToggle');
-  if (themeToggle) themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+  const themeIcon = document.getElementById('themeIcon');
+  if (themeIcon) {
+    themeIcon.setAttribute('data-lucide', theme === 'dark' ? 'sun' : 'moon');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  }
   localStorage.setItem(STORAGE_KEYS.THEME, theme);
 }
 function toggleTheme() {
@@ -333,6 +336,10 @@ function updateProfileView() {
     if (login) login.style.display = 'block';
     if (profileCard) profileCard.style.display = 'none';
     initGoogleAuth();
+  }
+  // Initialize Lucide icons after rendering
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
   }
 }
 
@@ -761,6 +768,10 @@ function loadScheduleForDay(dayIndex) {
   });
   container.innerHTML = html;
   attachLessonHandlers();
+  // Initialize Lucide icons after rendering
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
 }
 
 function attachLessonHandlers() {
