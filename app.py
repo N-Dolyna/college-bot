@@ -216,6 +216,14 @@ def serve_js():
 def serve_manifest():
     return app.send_static_file('manifest.json')
 
+@app.route('/styles.css')
+def serve_styles():
+    return app.send_static_file('styles.css')
+
+@app.route('/animations.css')
+def serve_animations():
+    return app.send_static_file('animations.css')
+
 @app.route('/api/health', methods=['GET'])
 def health():
     return jsonify({
