@@ -593,10 +593,10 @@ def get_groups_list():
 # =========================================================
 # ЗАПУСК
 # =========================================================
+load_tokens()
+reload_schedule_from_excel()
+
 if __name__ == '__main__':
-    load_tokens()
-    reload_schedule_from_excel()
-    
     port = int(os.getenv('PORT', 8000))
     logger.info(f"🚀 Server running on port {port}")
     app.run(debug=False, port=port, host='0.0.0.0')
