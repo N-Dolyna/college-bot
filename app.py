@@ -12,6 +12,8 @@ import requests
 import jwt
 import datetime
 import base64
+import signal
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import Flask, request, jsonify, session, redirect
@@ -51,6 +53,24 @@ try:
     load_dotenv()
 except ImportError:
     logger.warning("⚠️ python-dotenv not installed. Reading variables directly from OS environment.")
+
+# =========================================================
+# Таймаут handler для запитів
+# =========================================================
+
+class RequestTimeoutError(Exception):
+    pass
+
+@contextmanager
+def time_limit(seconds):
+    def signal_handler(signum, frame):
+        raise RequestTimeoutError("Запит перевищив ліміт часу")
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
 
 # =========================================================
 # 2. СУВОРА КОНФІГУРАЦІЯ
@@ -441,48 +461,88 @@ def get_coursework():
 
     try:
         srv = build('classroom', 'v1', credentials=creds)
+
+        # ✅ Отримуємо список завдань
+        logger.info(f"📥 Fetching coursework for course {cid}")
         res = srv.courses().courseWork().list(courseId=cid, orderBy='dueDate desc').execute()
+
+        coursework_list = res.get('courseWork', [])
+        logger.info(f"📋 Found {len(coursework_list)} coursework items")
+
         out = []
-        for work in res.get('courseWork', []):
-            if submittable and work.get('workType') == 'MATERIAL': continue
+
+        # ✅ ОПТИМІЗАЦІЯ: Отримуємо ВСІ submissions одним запитом
+        all_submissions = {}
+        if coursework_list:
+            try:
+                logger.info(f"🔄 Fetching all submissions for course {cid}")
+                submissions_response = srv.courses().courseWork().studentSubmissions().list(
+                    courseId=cid,
+                    courseWorkId='-',
+                    userId='me',
+                    pageSize=100  # Максимум за один запит
+                ).execute()
+
+                # Індексуємо submissions по courseWorkId для швидкого доступу
+                for submission in submissions_response.get('studentSubmissions', []):
+                    course_work_id = submission.get('courseWorkId')
+                    if course_work_id:
+                        all_submissions[course_work_id] = submission
+
+                logger.info(f"✅ Loaded {len(all_submissions)} submissions")
+            except Exception as e:
+                logger.warning(f"⚠️ Could not fetch submissions: {e}")
+                # Продовжуємо без submissions
+
+        # ✅ Обробляємо кожне завдання
+        for work in coursework_list:
+            if submittable and work.get('workType') == 'MATERIAL':
+                continue
 
             status = 'pending'
-            try:
-                submissions = srv.courses().courseWork().studentSubmissions().list(
-                    courseId=cid,
-                    courseWorkId=work['id'],
-                    userId='me'
-                ).execute()
-                if submissions.get('studentSubmissions'):
-                    submission_state = submissions['studentSubmissions'][0].get('state')
-                    if submission_state == 'TURNED_IN':
-                        status = 'submitted'
-                    elif submission_state == 'RETURNED':
-                        status = 'graded'
-                    elif submission_state == 'CREATED':
-                        status = 'draft'
-            except Exception as e:
-                logger.warning(f"Could not get submission status for {work['id']}: {e}")
+            work_id = work['id']
 
+            # ✅ Отримуємо статус з вже завантажених submissions (БЕЗ додаткового запиту!)
+            if work_id in all_submissions:
+                submission = all_submissions[work_id]
+                submission_state = submission.get('state')
+
+                if submission_state == 'TURNED_IN':
+                    status = 'submitted'
+                elif submission_state == 'RETURNED':
+                    status = 'graded'
+                elif submission_state == 'CREATED':
+                    status = 'draft'
+
+            # ✅ Перевірка дедлайну
             dd = work.get('dueDate')
             dt = None
             if dd:
-                dt = datetime(dd['year'], dd['month'], dd['day'])
-                if dt < datetime.now() and status == 'pending':
-                    status = 'overdue'
+                try:
+                    dt = datetime(dd['year'], dd['month'], dd['day'])
+                    if dt < datetime.now() and status == 'pending':
+                        status = 'overdue'
+                except Exception as e:
+                    logger.warning(f"⚠️ Invalid date format for work {work_id}: {e}")
 
+            # ✅ Формуємо результат
             out.append({
-                'id': work['id'],
+                'id': work_id,
                 'title': work['title'],
                 'description': work.get('description'),
                 'status': status,
                 'maxPoints': work.get('maxPoints'),
                 'deadline': dt.isoformat() if dt else None,
-                'alternateLink': work.get('alternateLink')
+                'alternateLink': work.get('alternateLink'),
+                'creationTime': work.get('creationTime'),
+                'updateTime': work.get('updateTime')
             })
+
+        logger.info(f"✅ Successfully processed {len(out)} assignments")
         return jsonify({'success': True, 'assignments': out})
+
     except Exception as e:
-        logger.error(f"Coursework error: {e}")
+        logger.error(f"❌ Coursework error: {e}")
         return json_error(str(e), 500)
 
 # --- SCHEDULE ---
