@@ -185,6 +185,7 @@ cython_debug/
 # Конфиденциальные данные (СЕКРЕТЫ И ТОКЕНЫ!)
 .env
 credentials.json
+tokens.json
 user_tokens.json
 
 # Логи
@@ -200,8 +201,4 @@ logs/
 
 # macOS
 .DS_Store
-.AppleDouble"user_tokens.json" 
-"*.json" 
-user_tokens.json 
-*.json 
-.env 
+.AppleDouble
