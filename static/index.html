@@ -53,7 +53,70 @@
         </div>
 
         <div id="homeworkTab" class="tab-content">
-            <div id="homeworkContent"></div>
+            <!-- Header з кнопкою назад (прихований за замовчуванням) -->
+            <div id="homeworkHeader" class="homework-header" style="display: none;">
+                <button class="btn-back" onclick="backToHomeworkList()">
+                    <i data-lucide="arrow-left"></i>
+                    <span>Назад</span>
+                </button>
+                <h2 id="currentCourseName"></h2>
+            </div>
+
+            <!-- Стан 1: Список курсів -->
+            <div id="homeworkCoursesList" class="homework-courses-list">
+                <div class="section-header">
+                    <h2>Курси:</h2>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="showSubmittedHomework" onchange="filterHomework()">
+                        <span>Показувати тільки здаваємі</span>
+                    </label>
+                </div>
+                <div id="homeworkCoursesContainer"></div>
+            </div>
+
+            <!-- Стан 2: Деталі курсу -->
+            <div id="homeworkCourseDetail" class="homework-course-detail" style="display: none;">
+                <!-- Статистика курсу -->
+                <div class="course-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i data-lucide="target"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-label">Прогрес</div>
+                            <div class="stat-value" id="courseProgress">0%</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i data-lucide="clipboard-list"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-label">Завдання</div>
+                            <div class="stat-value" id="courseTasksCount">0/0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i data-lucide="clock"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-label">Найближчий</div>
+                            <div class="stat-value" id="courseNextDeadline">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Фільтри -->
+                <div class="homework-filters">
+                    <button class="filter-btn active" data-filter="all" onclick="filterCourseHomework('all')">
+                        Всі
+                    </button>
+                    <button class="filter-btn" data-filter="active" onclick="filterCourseHomework('active')">
+                        Активні
+                    </button>
+                    <button class="filter-btn" data-filter="completed" onclick="filterCourseHomework('completed')">
+                        Виконані
+                    </button>
+                </div>
+
+                <!-- Список завдань курсу -->
+                <div id="courseHomeworkList"></div>
+            </div>
         </div>
 
         <div id="profileTab" class="tab-content">
