@@ -21,6 +21,13 @@ let currentCourseId = null;
 let showOnlySubmittable = true;
 let expandedLessonId = null;
 
+// === HOMEWORK NAVIGATION STATE ===
+let homeworkViewState = 'list'; // 'list' | 'detail'
+let selectedCourseId = null;
+let selectedCourseName = null;
+let homeworkFilter = 'all'; // 'all' | 'active' | 'completed'
+let allCourseHomework = [];
+
 // ===== СПОВІЩЕННЯ =====
 function showNotification(message, type = 'info') {
   console.log(`[${type.toUpperCase()}] ${message}`);
@@ -368,8 +375,8 @@ function logout() {
 // ===== GOOGLE CLASSROOM: КУРСИ / ЗАВДАННЯ =====
 async function loadCourses() {
   if (!isLoggedIn || !userData) { console.log('not logged in'); return; }
-  const container = document.getElementById('homeworkContent');
-  container.innerHTML = `<div class="loading"><div class="spinner"></div><p>Завантаження курсів...</p></div>`;
+  const container = document.getElementById('homeworkCoursesContainer');
+  if (container) container.innerHTML = `<div class="loading"><div class="spinner"></div><p>Завантаження курсів...</p></div>`;
   try {
     const resp = await fetch(`${API_BASE}/classroom/courses?userId=${encodeURIComponent(userData.email)}`);
     if (!resp.ok) { const e = await resp.json().catch(()=>({error:'HTTP'})); throw new Error(e.error||`HTTP ${resp.status}`); }
@@ -378,69 +385,230 @@ async function loadCourses() {
     renderCoursesList();
   } catch (e) {
     console.error('loadCourses failed', e);
-    container.innerHTML = `<div class="empty-state"><h3>Не вдалося завантажити курси</h3><p>${e.message}</p></div>`;
+    if (container) container.innerHTML = `<div class="empty-state"><h3>Не вдалося завантажити курси</h3><p>${e.message}</p></div>`;
   }
 }
 function renderCoursesList() {
-  const container = document.getElementById('homeworkContent');
+  const container = document.getElementById('homeworkCoursesContainer');
+  if (!container) return;
   if (!coursesList || coursesList.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📚</div><h3>Курси не знайдені</h3><p>Можливо, ви ще не підключали Google Classroom.</p></div>`;
     return;
   }
-  let html = `<div style="display:flex; gap:10px; align-items:center; margin-bottom:12px;">
-      <div style="font-weight:700;">Курси:</div>
-      <label style="margin-left:auto; display:flex; gap:8px; align-items:center;">
-        <input type="checkbox" id="submittableToggle" ${showOnlySubmittable?'checked':''} onchange="toggleSubmittableFilter(this.checked)">
-        <span>Показывать только сдаваемые</span>
-      </label>
-    </div>
-    <div id="coursesList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
-    <div id="courseAssignments"></div>`;
-  container.innerHTML = html;
-  const listEl = document.getElementById('coursesList');
-  coursesList.forEach(c=>{
+  container.innerHTML = '';
+  coursesList.forEach(c => {
     const item = document.createElement('div');
-    item.className='homework-card';
-    item.style.cursor='pointer';
-    item.onclick = ()=>{ currentCourseId = c.id; loadAssignmentsForCourse(c.id,c.name); document.querySelectorAll('#coursesList .homework-card').forEach(el=>el.style.opacity='0.6'); item.style.opacity='1'; };
-    item.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;"><div style="font-weight:700;">${c.name}</div><div style="font-size:13px; color:var(--text-secondary)">${c.section||''}</div></div>`;
-    listEl.appendChild(item);
+    item.className = 'homework-card course-card';
+    item.style.cursor = 'pointer';
+    const nameEl = document.createElement('div');
+    nameEl.style.fontWeight = '700';
+    nameEl.textContent = '📚 ' + c.name;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; justify-content:space-between; align-items:center;';
+    row.appendChild(nameEl);
+    if (c.section) {
+      const sectionEl = document.createElement('div');
+      sectionEl.style.cssText = 'font-size:13px; color:var(--text-secondary)';
+      sectionEl.textContent = c.section;
+      row.appendChild(sectionEl);
+    }
+    item.appendChild(row);
+    item.addEventListener('click', () => openCourseDetail(c.id, c.name));
+    container.appendChild(item);
   });
 }
-function toggleSubmittableFilter(checked) { showOnlySubmittable = checked; if (currentCourseId) loadAssignmentsForCourse(currentCourseId); }
+function filterHomework() {
+  showOnlySubmittable = document.getElementById('showSubmittedHomework')?.checked || false;
+  if (selectedCourseId) loadCourseHomework(selectedCourseId, selectedCourseName);
+}
 
-async function loadAssignmentsForCourse(courseId, courseName='') {
-  if (!isLoggedIn || !userData) return;
-  const container = document.getElementById('courseAssignments');
-  container.innerHTML = `<div class="loading"><div class="spinner"></div><p>Завантаження завдань...</p></div>`;
+// Відкрити деталі курсу
+function openCourseDetail(courseId, courseName) {
+  homeworkViewState = 'detail';
+  selectedCourseId = courseId;
+  selectedCourseName = courseName;
+  homeworkFilter = 'all';
+
+  const coursesList = document.getElementById('homeworkCoursesList');
+  coursesList.classList.add('slide-out');
+
+  setTimeout(() => {
+    coursesList.style.display = 'none';
+    coursesList.classList.remove('slide-out');
+
+    const detailView = document.getElementById('homeworkCourseDetail');
+    const header = document.getElementById('homeworkHeader');
+
+    document.getElementById('currentCourseName').textContent = courseName;
+    header.style.display = 'flex';
+    detailView.style.display = 'block';
+    detailView.classList.add('slide-in');
+
+    // Reset filters
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.remove('active');
+      if (btn.dataset.filter === 'all') btn.classList.add('active');
+    });
+
+    loadCourseHomework(courseId, courseName);
+
+    setTimeout(() => { detailView.classList.remove('slide-in'); }, 300);
+  }, 300);
+}
+
+// Повернутися до списку курсів
+function backToHomeworkList() {
+  homeworkViewState = 'list';
+  selectedCourseId = null;
+  selectedCourseName = null;
+
+  const detailView = document.getElementById('homeworkCourseDetail');
+  const header = document.getElementById('homeworkHeader');
+
+  detailView.classList.add('slide-out');
+
+  setTimeout(() => {
+    detailView.style.display = 'none';
+    header.style.display = 'none';
+    detailView.classList.remove('slide-out');
+
+    const coursesListEl = document.getElementById('homeworkCoursesList');
+    coursesListEl.style.display = 'block';
+    coursesListEl.classList.add('slide-in');
+
+    setTimeout(() => { coursesListEl.classList.remove('slide-in'); }, 300);
+  }, 300);
+}
+
+// Завантажити завдання курсу
+async function loadCourseHomework(courseId, courseName) {
+  const container = document.getElementById('courseHomeworkList');
+  if (container) container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Завантаження завдань...</p></div>';
+
   try {
     const resp = await fetch(`${API_BASE}/classroom/coursework?userId=${encodeURIComponent(userData.email)}&courseId=${encodeURIComponent(courseId)}&submittable=${showOnlySubmittable}`);
     if (!resp.ok) { const e = await resp.json().catch(()=>({error:'HTTP'})); throw new Error(e.error||`HTTP ${resp.status}`); }
     const j = await resp.json();
     const assignments = j.assignments || [];
-    if (assignments.length === 0) {
-      container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><h3>Немає завдань</h3><p>Для даного курсу немає доступних завдань.</p></div>`;
-      return;
-    }
-    let html = `<h3 style="margin-bottom:12px;">Завдання${courseName? ' — '+courseName : ''}</h3>`;
-    assignments.forEach(hw=>{
-      const deadline = hw.deadline? new Date(hw.deadline).toLocaleString('uk-UA') : 'Без дедлайну';
-      const safeLink = hw.alternateLink && /^https?:\/\//i.test(hw.alternateLink) ? hw.alternateLink : null;
-      html += `<div class="homework-card status-${hw.status}"><div class="homework-header"><div class="homework-subject">${courseName||''}</div><div class="homework-status status-${hw.status}">${hw.status}</div></div><div class="homework-title">${hw.title}</div><div style="font-size:13px; color:var(--text-secondary); margin-top:8px;">${hw.description? (hw.description.length>200? hw.description.slice(0,200)+'…': hw.description) : ''}</div><div class="homework-deadline">📅 ${deadline}</div><div style="margin-top:10px; display:flex; gap:8px;">${safeLink ? `<a href="${safeLink}" target="_blank" rel="noopener noreferrer" style="text-decoration: none;"><button class="btn btn-secondary">🔗 Відкрити в Classroom</button></a>` : `<button class="btn btn-secondary" disabled style="opacity: 0.5; cursor: not-allowed;">Немає посилання</button>`}</div></div>`;
-    });
-    container.innerHTML = html;
-  } catch(e) {
-    console.error('loadAssignmentsForCourse failed', e);
-    container.innerHTML = `<div class="empty-state"><h3>Ошибка загрузки заданий</h3><p>${e.message}</p></div>`;
+    allCourseHomework = assignments;
+    renderCourseHomework(assignments);
+    updateCourseStats(assignments);
+  } catch (e) {
+    console.error('loadCourseHomework failed', e);
+    if (container) container.innerHTML = `<div class="empty-state"><h3>Помилка завантаження завдань</h3><p>${e.message}</p></div>`;
   }
+}
+
+// Відобразити завдання курсу
+function renderCourseHomework(assignments) {
+  const container = document.getElementById('courseHomeworkList');
+  if (!container) return;
+
+  if (!assignments || assignments.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><h3>Немає завдань</h3><p>Для даного курсу немає доступних завдань.</p></div>';
+    return;
+  }
+
+  let html = '';
+  assignments.forEach(hw => {
+    const deadline = hw.deadline ? formatHomeworkDate(new Date(hw.deadline)) : 'Без дедлайну';
+    const statusClass = getHomeworkStatusClass(hw);
+    const statusText = getHomeworkStatusText(hw.status);
+    const safeLink = hw.alternateLink && /^https?:\/\//i.test(hw.alternateLink) ? hw.alternateLink : null;
+
+    html += `
+      <div class="homework-card status-${statusClass}">
+        <div class="homework-header">
+          <div class="homework-title">${hw.title}</div>
+          <div class="homework-status status-badge-${statusClass}">${statusText}</div>
+        </div>
+        ${hw.description ? `<div style="font-size:13px; color:var(--text-secondary); margin-top:8px; margin-bottom:12px;">${hw.description.length > 200 ? hw.description.slice(0, 200) + '…' : hw.description}</div>` : ''}
+        <div class="homework-deadline">📅 ${deadline}</div>
+        <div class="homework-actions">
+          ${safeLink ? `<a href="${safeLink}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><button class="btn btn-secondary">🔗 Відкрити в Classroom</button></a>` : `<button class="btn btn-secondary" disabled style="opacity:0.5;cursor:not-allowed;">Немає посилання</button>`}
+        </div>
+      </div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+// Оновити статистику курсу
+function updateCourseStats(assignments) {
+  const total = assignments.length;
+  const completed = assignments.filter(a => a.status === 'submitted' || a.status === 'graded').length;
+  const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  const progressEl = document.getElementById('courseProgress');
+  const tasksEl = document.getElementById('courseTasksCount');
+  const deadlineEl = document.getElementById('courseNextDeadline');
+
+  if (progressEl) progressEl.textContent = `${progress}%`;
+  if (tasksEl) tasksEl.textContent = `${completed}/${total}`;
+
+  const upcoming = assignments
+    .filter(a => a.deadline && new Date(a.deadline) > new Date() && a.status !== 'submitted' && a.status !== 'graded')
+    .sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+
+  if (deadlineEl) deadlineEl.textContent = upcoming.length > 0 ? formatHomeworkDate(new Date(upcoming[0].deadline)) : '-';
+}
+
+// Фільтрувати завдання курсу
+function filterCourseHomework(filter) {
+  homeworkFilter = filter;
+
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.dataset.filter === filter) btn.classList.add('active');
+  });
+
+  let filtered = allCourseHomework;
+  if (filter === 'active') {
+    filtered = allCourseHomework.filter(a => a.status !== 'submitted' && a.status !== 'graded');
+  } else if (filter === 'completed') {
+    filtered = allCourseHomework.filter(a => a.status === 'submitted' || a.status === 'graded');
+  }
+
+  renderCourseHomework(filtered);
+}
+
+function getHomeworkStatusClass(homework) {
+  if (homework.status === 'submitted' || homework.status === 'graded') return 'completed';
+  if (homework.status === 'overdue') return 'overdue';
+  if (homework.deadline) {
+    const daysUntil = Math.ceil((new Date(homework.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+    if (daysUntil <= 3 && daysUntil >= 0) return 'urgent';
+  }
+  return 'pending';
+}
+
+function getHomeworkStatusText(status) {
+  const statusMap = {
+    'pending': '🕐 Очікується',
+    'submitted': '✅ Здано',
+    'graded': '✅ Оцінено',
+    'overdue': '❌ Прострочено',
+    'draft': '📝 Чернетка'
+  };
+  return statusMap[status] || status;
+}
+
+function formatHomeworkDate(date) {
+  return date.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function toggleSubmittableFilter(checked) { showOnlySubmittable = checked; if (selectedCourseId) loadCourseHomework(selectedCourseId, selectedCourseName); }
+
+async function loadAssignmentsForCourse(courseId, courseName='') {
+  return loadCourseHomework(courseId, courseName);
 }
 
 // ===== ЗАВАНТАЖЕННЯ ДОМАШНІХ ЗАВДАНЬ =====
 function loadHomework() {
-  const container = document.getElementById('homeworkContent');
+  const coursesContainer = document.getElementById('homeworkCoursesContainer');
   if (!isLoggedIn || !userData) {
-    if (container) {
-      container.innerHTML = `
+    if (coursesContainer) {
+      coursesContainer.innerHTML = `
         <div class="empty-state">
           <div class="empty-state-icon">🔐</div>
           <h3>Увійдіть для перегляду завдань</h3>
@@ -452,14 +620,14 @@ function loadHomework() {
     return;
   }
 
-  if (container) container.innerHTML = `<div class="loading"><div class="spinner"></div><p>Завантаження курсів...</p></div>`;
+  if (coursesContainer) coursesContainer.innerHTML = `<div class="loading"><div class="spinner"></div><p>Завантаження курсів...</p></div>`;
 
   try {
     if (typeof loadCourses === 'function') {
       loadCourses();
     } else {
-      if (container) {
-        container.innerHTML = `
+      if (coursesContainer) {
+        coursesContainer.innerHTML = `
           <div class="empty-state">
             <div class="empty-state-icon">📚</div>
             <h3>Курси тимчасово недоступні</h3>
@@ -471,7 +639,7 @@ function loadHomework() {
     }
   } catch (err) {
     console.error('loadHomework error', err);
-    if (container) container.innerHTML = `<div class="empty-state"><h3>Помилка при завантаженні</h3><p>${err && err.message ? err.message : ''}</p></div>`;
+    if (coursesContainer) coursesContainer.innerHTML = `<div class="empty-state"><h3>Помилка при завантаженні</h3><p>${err && err.message ? err.message : ''}</p></div>`;
   }
 }
 try { if (typeof loadHomework === 'function') window.loadHomework = loadHomework; } catch(e){}

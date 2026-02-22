@@ -824,3 +824,191 @@ body::before {
     margin-bottom: 16px;
     border-radius: 8px;
 }
+
+/* === HOMEWORK NAVIGATION === */
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.section-header h2 {
+    font-weight: 700;
+    margin: 0;
+}
+
+.checkbox-label {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+#homeworkHeader {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.btn-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.btn-back:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateX(-4px);
+}
+
+.btn-back i {
+    width: 16px;
+    height: 16px;
+}
+
+.homework-courses-list,
+.homework-course-detail {
+    transition: all 0.3s ease;
+}
+
+/* Статистика курсу */
+.course-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.stat-icon i {
+    width: 24px;
+    height: 24px;
+}
+
+.stat-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* Фільтри завдань */
+.homework-filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 8px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+}
+
+.filter-btn {
+    flex: 1;
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.filter-btn:hover {
+    background: var(--bg-hover, rgba(0,0,0,0.05));
+}
+
+.filter-btn.active {
+    background: var(--primary);
+    color: white;
+}
+
+/* Статуси завдань */
+.homework-card.status-completed {
+    border-left: 4px solid #10B981;
+}
+
+.homework-card.status-pending {
+    border-left: 4px solid #F59E0B;
+}
+
+.homework-card.status-urgent {
+    border-left: 4px solid #F97316;
+}
+
+.homework-card.status-overdue {
+    border-left: 4px solid #EF4444;
+}
+
+.homework-status[class*="status-badge-"] {
+    color: white;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.homework-status.status-badge-completed { background: #10B981; }
+.homework-status.status-badge-pending   { background: #F59E0B; }
+.homework-status.status-badge-urgent    { background: #F97316; }
+.homework-status.status-badge-overdue   { background: #EF4444; }
+
+/* Адаптивність */
+@media (max-width: 768px) {
+    .course-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .homework-filters {
+        flex-direction: column;
+    }
+}
