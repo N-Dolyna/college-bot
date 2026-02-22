@@ -509,8 +509,15 @@ function renderCourseHomework(assignments) {
     return;
   }
 
+  // Сортування: нові завдання зверху, старі внизу
+  const sortedAssignments = [...assignments].sort((a, b) => {
+    const dateA = new Date(a.createdTime || a.creationTime || a.updateTime || 0);
+    const dateB = new Date(b.createdTime || b.creationTime || b.updateTime || 0);
+    return dateB - dateA;
+  });
+
   let html = '';
-  assignments.forEach(hw => {
+  sortedAssignments.forEach(hw => {
     const deadline = hw.deadline ? formatHomeworkDate(new Date(hw.deadline)) : 'Без дедлайну';
     const statusClass = getHomeworkStatusClass(hw);
     const statusText = getHomeworkStatusText(hw.status);
@@ -523,7 +530,8 @@ function renderCourseHomework(assignments) {
           <div class="homework-status status-badge-${statusClass}">${statusText}</div>
         </div>
         ${hw.description ? `<div style="font-size:13px; color:var(--text-secondary); margin-top:8px; margin-bottom:12px;">${hw.description.length > 200 ? hw.description.slice(0, 200) + '…' : hw.description}</div>` : ''}
-        <div class="homework-deadline">📅 ${deadline}</div>
+        ${hw.createdTime || hw.creationTime ? `<div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">📆 Додано: ${formatHomeworkDate(new Date(hw.createdTime || hw.creationTime))}</div>` : ''}
+        <div class="homework-deadline">📅 Дедлайн: ${deadline}</div>
         <div class="homework-actions">
           ${safeLink ? `<a href="${safeLink}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><button class="btn btn-secondary">🔗 Відкрити в Classroom</button></a>` : `<button class="btn btn-secondary" disabled style="opacity:0.5;cursor:not-allowed;">Немає посилання</button>`}
         </div>
