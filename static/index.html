@@ -283,7 +283,7 @@ function viewParsedSchedule() {
             text += `  ${j+1}. ${lesson.time || ''} - ${lesson.title || 'Без назви'}\n`;
             if (lesson.teacher) text += `     👤 ${lesson.teacher}\n`;
             if (lesson.room) text += `     🚪 ${lesson.room}\n`;
-            if (lesson.conference) text += `     🔗 ${lesson.conference}\n`;
+            if (lesson.conferenceUrl || lesson.conference) text += `     🔗 ${lesson.conferenceUrl || lesson.conference}\n`;
         });
         text += '\n';
     });

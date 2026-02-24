@@ -196,7 +196,7 @@ function toggleTheme() {
 function loadStorageData() {
   const savedSchedule = localStorage.getItem(STORAGE_KEYS.SCHEDULE);
   if (savedSchedule) {
-    try { scheduleData = JSON.parse(savedSchedule); } catch(e){ scheduleData = {'ОПК-412':[[],[],[],[],[]]}; }
+    try { scheduleData = JSON.parse(savedSchedule); migrateConferenceLinks(scheduleData['ОПК-412']); } catch(e){ scheduleData = {'ОПК-412':[[],[],[],[],[]]}; }
   } else {
     scheduleData = {'ОПК-412':[[],[],[],[],[]]};
     saveScheduleData();
@@ -211,6 +211,29 @@ function saveScheduleData() {
 }
 function saveHomeworkData() {
   localStorage.setItem(STORAGE_KEYS.HOMEWORK, JSON.stringify(homeworkData));
+}
+
+// ===== МІГРАЦІЯ: conference -> conferenceUrl =====
+function migrateConferenceLinks(schedule) {
+  if (!Array.isArray(schedule)) return schedule;
+  schedule.forEach(day => {
+    if (!Array.isArray(day)) return;
+    day.forEach(lesson => {
+      if (!lesson) return;
+      if (lesson.conference && !lesson.conferenceUrl) {
+        lesson.conferenceUrl = lesson.conference;
+        delete lesson.conference;
+      }
+    });
+  });
+  return schedule;
+}
+
+function normalizeConferenceUrl(val) {
+  val = (val || '').trim();
+  if (!val) return '';
+  if (!/^https?:\/\//i.test(val)) val = 'https://' + val;
+  return val;
 }
 
 // ===== GOOGLE OAUTH (ФРОНТЕНД) =====
@@ -298,6 +321,7 @@ async function fetchServerScheduleIfExists(group='ОПК-412') {
     const j = await resp.json();
     if (j && j.success && j.schedule) {
       scheduleData[group] = j.schedule;
+      migrateConferenceLinks(scheduleData[group]);
       saveScheduleData();
       loadScheduleForCurrentDay();
       console.log('Синхронизовано розклад з сервера для групи', group);
@@ -909,7 +933,7 @@ function loadScheduleForDay(dayIndex) {
   let html = '';
   lessons.forEach((lesson, i)=>{
     const id = `lesson-${dayIndex}-${i}`;
-    const link = extractMeetingLink(lesson);
+    const link = lesson.conferenceUrl || null;
     const desc = lesson.description? String(lesson.description) : '';
     const shortDesc = desc.length>200? desc.slice(0,200)+'…': desc;
     const showRoom = lesson.room && lesson.room !== 'Не вказано';
@@ -935,7 +959,7 @@ function loadScheduleForDay(dayIndex) {
       <div class="lesson-details-panel" id="${id}-panel" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
         <div style="font-size:13px; color:var(--text-secondary); line-height:1.4;">
           ${lesson.description? `<div style="margin-bottom:8px;">${lesson.description}</div>` : ''}
-          ${link? `<div style="margin-bottom:8px;"><strong>Посилання:</strong> <a href="${link}" target="_blank" rel="noopener noreferrer">${link}</a></div>` : `<div style="margin-bottom:8px;"><em>Посилання не знайдено</em></div>`}
+          ${link? `<div style="margin-bottom:8px;"><strong>Посилання:</strong> <a href="${link}" target="_blank" rel="noopener noreferrer">${link}</a></div>` : ''}
           ${lesson.teacher? `<div><strong>Викладач:</strong> ${lesson.teacher}</div>` : ''}
           ${showRoom? `<div><strong>Кабінет:</strong> ${lesson.room}</div>` : ''}
         </div>
@@ -1100,7 +1124,7 @@ function renderScheduleEditor(group, schedule) {
     dayDiv.style.marginBottom = '12px';
     dayDiv.innerHTML = `<h4 style="margin-bottom:8px;">${days[d]} (${dayLessons.length} пар)</h4>`;
     dayLessons.forEach((les, idx) => {
-      const linkVal = les.conference || '';
+      const linkVal = les.conferenceUrl || les.conference || '';
       const title = les.title || `${les.time || ''} ${les.title || ''}`;
       const lessonRow = document.createElement('div');
       lessonRow.style.display = 'flex';
@@ -1110,7 +1134,7 @@ function renderScheduleEditor(group, schedule) {
       lessonRow.innerHTML = `
         <div style="flex:1;">
           <div style="font-weight:600;">${idx+1}. ${title}</div>
-          <div style="font-size:13px; color:#666;">${les.teacher || ''} ${les.room? ' • ' + les.room : ''}</div>
+          <div style="font-size:13px; color:var(--text-secondary);">${les.teacher || ''} ${les.room? ' • ' + les.room : ''}</div>
         </div>
         <input data-day="${d}" data-idx="${idx}" class="editor-link-input" type="text" value="${linkVal}" placeholder="Посилання на конференцію (https://...)" style="flex:0 0 420px; padding:8px; border:1px solid #ddd; border-radius:8px;"/>
         <button class="btn btn-secondary editor-apply-btn" data-day="${d}" data-idx="${idx}">Зберегти</button>
@@ -1127,11 +1151,17 @@ function renderScheduleEditor(group, schedule) {
       const d = Number(btn.dataset.day);
       const idx = Number(btn.dataset.idx);
       const input = body.querySelector(`.editor-link-input[data-day="${d}"][data-idx="${idx}"]`);
-      const val = input.value.trim();
+      let val = normalizeConferenceUrl(input.value);
       if (!schedule[d]) schedule[d] = [];
       schedule[d][idx] = schedule[d][idx] || {};
-      if (val) schedule[d][idx].conference = val;
-      else delete schedule[d][idx].conference;
+      if (val) {
+        schedule[d][idx].conferenceUrl = val;
+        delete schedule[d][idx].conference;
+      } else {
+        delete schedule[d][idx].conferenceUrl;
+        delete schedule[d][idx].conference;
+      }
+      input.value = val;
       input.style.borderColor = '#4CAF50';
       setTimeout(()=> input.style.borderColor = '#ddd', 800);
     });
@@ -1150,11 +1180,16 @@ function readScheduleFromEditor() {
   inputs.forEach(inp => {
     const d = Number(inp.dataset.day);
     const idx = Number(inp.dataset.idx);
-    const val = inp.value.trim();
+    let val = normalizeConferenceUrl(inp.value);
     base[d] = base[d] || [];
     base[d][idx] = base[d][idx] || {};
-    if (val) base[d][idx].conference = val;
-    else delete base[d][idx].conference;
+    if (val) {
+      base[d][idx].conferenceUrl = val;
+      delete base[d][idx].conference;
+    } else {
+      delete base[d][idx].conferenceUrl;
+      delete base[d][idx].conference;
+    }
   });
   return base;
 }
