@@ -310,7 +310,7 @@ function renderTelegramConnectButton() {
         <button class="btn btn-secondary" onclick="unlinkTelegram()" style="margin-left:auto;">Відʼєднати</button>
       </div>`;
   } else {
-    const botName = 'ct_college_bot'; // ЗМІНИТИ на імʼя свого бота
+    const botName = 'Kharkiv_CT_College_Bot'; 
     const deepLink = `https://t.me/${botName}?start=link_${encodeURIComponent(btoa(userData.email))}`;
     container.innerHTML = `
       <div style="padding:12px; background:var(--card-bg); border-radius:12px; border:1px solid var(--border); margin-top:12px;">
