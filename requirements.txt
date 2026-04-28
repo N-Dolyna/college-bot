@@ -9,3 +9,4 @@ requests==2.31.0
 PyJWT==2.8.0
 python-dotenv==1.0.0
 gunicorn==21.2.0
+python-telegram-bot==20.7
