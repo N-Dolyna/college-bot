@@ -1,362 +1,554 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#007AFF">
-    <title>CT College Bot - ОПК-412</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23007AFF'/></svg>">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Google Sign-In -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    
-    <!-- SheetJS для парсингу Excel -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <!-- Telegram Web App SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="animations.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#007AFF">
+  <title>CT College Bot - ОПК-412</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23007AFF'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    /* ===== CSS VARIABLES ===== */
+    :root {
+      --primary: #007AFF;
+      --primary-dark: #0056b3;
+      --secondary: #5856D6;
+      --success: #34C759;
+      --warning: #FF9500;
+      --danger: #FF3B30;
+      --bg: #F2F2F7;
+      --bg-secondary: #FFFFFF;
+      --card-bg: #FFFFFF;
+      --text: #1C1C1E;
+      --text-secondary: #6C6C70;
+      --border: #E5E5EA;
+      --nav-bg: #FFFFFF;
+      --header-bg: rgba(255,255,255,0.85);
+      --shadow: 0 2px 16px rgba(0,0,0,0.08);
+      --radius: 16px;
+    }
+    [data-theme="dark"] {
+      --bg: #000000;
+      --bg-secondary: #1C1C1E;
+      --card-bg: #2C2C2E;
+      --text: #FFFFFF;
+      --text-secondary: #8E8E93;
+      --border: #38383A;
+      --nav-bg: #1C1C1E;
+      --header-bg: rgba(28,28,30,0.9);
+      --shadow: 0 2px 16px rgba(0,0,0,0.4);
+    }
+
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { height: 100%; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 80px;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--primary); text-decoration: none; }
+
+    /* ===== GEOMETRIC BG ===== */
+    .geometric-bg {
+      position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+    }
+    .geometric-bg::before {
+      content: '';
+      position: absolute; width: 600px; height: 600px;
+      border-radius: 50%; top: -200px; right: -150px;
+      background: radial-gradient(circle, rgba(0,122,255,0.08) 0%, transparent 70%);
+    }
+    .geometric-bg::after {
+      content: '';
+      position: absolute; width: 400px; height: 400px;
+      border-radius: 50%; bottom: 100px; left: -100px;
+      background: radial-gradient(circle, rgba(88,86,214,0.06) 0%, transparent 70%);
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--header-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 16px;
+    }
+    .header-content {
+      max-width: 680px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px;
+    }
+    .logo-section { display: flex; align-items: center; gap: 12px; }
+    .logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex; align-items: center; justify-content: center;
+      color: white;
+    }
+    .logo-icon svg { width: 20px; height: 20px; }
+    .logo-text h1 { font-size: 17px; font-weight: 700; color: var(--text); }
+    .current-info { font-size: 12px; color: var(--text-secondary); }
+    .theme-toggle {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 8px; cursor: pointer;
+      color: var(--text); display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    .theme-toggle:hover { background: var(--border); }
+    .theme-toggle svg { width: 18px; height: 18px; }
+
+    /* ===== CONTAINER ===== */
+    .container { max-width: 680px; margin: 0 auto; padding: 16px; }
+
+    /* ===== TABS ===== */
+    .tab-content { display: none; animation: fadeIn 0.2s ease; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ===== DATE SELECTOR ===== */
+    .date-selector {
+      display: flex; gap: 8px; margin-bottom: 16px;
+      overflow-x: auto; padding-bottom: 4px; scrollbar-width: none;
+    }
+    .date-selector::-webkit-scrollbar { display: none; }
+    .date-btn {
+      flex: 0 0 auto; min-width: 52px; padding: 10px 14px;
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 12px; cursor: pointer; text-align: center;
+      font-size: 14px; font-weight: 500; color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+    .date-btn.active {
+      background: var(--primary); border-color: var(--primary);
+      color: white; font-weight: 600;
+    }
+    .date-btn:hover:not(.active) { border-color: var(--primary); color: var(--primary); }
+
+    /* ===== LESSON CARD ===== */
+    .lesson-card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px; margin-bottom: 10px;
+      box-shadow: var(--shadow); transition: box-shadow 0.15s;
+    }
+    .lesson-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+    .lesson-time { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+    .lesson-type {
+      font-size: 11px; padding: 2px 8px; border-radius: 20px;
+      background: rgba(0,122,255,0.1); color: var(--primary); font-weight: 600;
+    }
+    .lesson-title { font-size: 15px; font-weight: 600; color: var(--text); }
+
+    /* ===== HOMEWORK / COURSES ===== */
+    .homework-card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px; margin-bottom: 10px;
+      box-shadow: var(--shadow); transition: all 0.15s;
+    }
+    .homework-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.12); border-color: var(--primary); }
+    .homework-card.status-overdue { border-left: 4px solid var(--danger); }
+    .homework-card.status-pending { border-left: 4px solid var(--warning); }
+    .homework-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .homework-subject { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+    .homework-title { font-size: 15px; font-weight: 600; color: var(--text); }
+    .homework-deadline { font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
+    .homework-status {
+      font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+    }
+    .status-overdue { background: rgba(255,59,48,0.1); color: var(--danger); }
+    .status-pending  { background: rgba(255,149,0,0.1); color: var(--warning); }
+
+    /* ===== PROFILE ===== */
+    .profile-card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+    .profile-header { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+    .profile-info { flex: 1; min-width: 0; }
+    .profile-info h2 { font-size: 18px; font-weight: 700; }
+    .avatar {
+      width: 60px; height: 60px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 700; color: white; overflow: hidden;
+    }
+
+    /* ===== AUTH ===== */
+    .auth-container {
+      text-align: center; padding: 48px 24px;
+      background: var(--card-bg); border-radius: var(--radius);
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+    }
+    .auth-icon {
+      width: 72px; height: 72px; border-radius: 20px; margin: 0 auto 20px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex; align-items: center; justify-content: center; color: white;
+    }
+    .auth-icon svg { width: 36px; height: 36px; }
+    .auth-container h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .auth-container p { color: var(--text-secondary); margin-bottom: 24px; font-size: 15px; }
+
+    /* ===== ADMIN ===== */
+    .admin-section h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .upload-section {
+      border: 2px dashed var(--border); border-radius: var(--radius);
+      padding: 32px 16px; text-align: center; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .upload-section:hover { border-color: var(--primary); background: rgba(0,122,255,0.04); }
+    .upload-icon { font-size: 36px; margin-bottom: 10px; }
+    .upload-text { font-weight: 600; color: var(--text); }
+    .upload-hint { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 18px; border-radius: 12px; border: 1px solid var(--border);
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      background: var(--card-bg); color: var(--text);
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn:active { transform: scale(0.97); }
+    .btn svg { width: 16px; height: 16px; }
+    .btn-primary {
+      background: var(--primary); color: white; border-color: var(--primary);
+    }
+    .btn-secondary {
+      background: var(--bg); color: var(--text); border-color: var(--border);
+    }
+    .btn-back {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px; border-radius: 10px; border: none;
+      background: transparent; color: var(--primary); cursor: pointer;
+      font-size: 15px; font-weight: 500;
+    }
+
+    /* ===== BOTTOM NAV ===== */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+      background: var(--nav-bg); border-top: 1px solid var(--border);
+      display: flex; justify-content: space-around; align-items: center;
+      padding: 8px 0; padding-bottom: calc(8px + env(safe-area-inset-bottom));
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 6px 20px; cursor: pointer; border-radius: 12px;
+      color: var(--text-secondary); transition: color 0.15s;
+    }
+    .nav-item.active { color: var(--primary); }
+    .nav-item:hover { color: var(--primary); }
+    .nav-icon svg { width: 22px; height: 22px; }
+    .nav-label { font-size: 11px; font-weight: 600; }
+
+    /* ===== LOADING / SPINNER ===== */
+    .loading {
+      text-align: center; padding: 48px 24px; color: var(--text-secondary);
+    }
+    .spinner {
+      width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 16px;
+      border: 3px solid var(--border); border-top-color: var(--primary);
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      text-align: center; padding: 48px 24px;
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+    }
+    .empty-state-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .empty-state p { color: var(--text-secondary); font-size: 15px; }
+
+    /* ===== NOTIFICATIONS ===== */
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to   { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to   { transform: translateX(400px); opacity: 0; }
+    }
+
+    /* ===== SECTION HEADER ===== */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px; flex-wrap: wrap; gap: 8px;
+    }
+    .section-header h2 { font-size: 20px; font-weight: 700; }
+
+    /* ===== STAT CARDS ===== */
+    .course-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stat-card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 10px;
+    }
+    .stat-icon { color: var(--primary); }
+    .stat-icon svg { width: 20px; height: 20px; }
+    .stat-label { font-size: 11px; color: var(--text-secondary); }
+    .stat-value { font-size: 16px; font-weight: 700; }
+
+    /* ===== FILTERS ===== */
+    .homework-filters { display: flex; gap: 8px; margin-bottom: 16px; }
+    .filter-btn {
+      padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border);
+      background: var(--card-bg); color: var(--text-secondary);
+      font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s;
+    }
+    .filter-btn.active {
+      background: var(--primary); color: white; border-color: var(--primary);
+    }
+
+    /* ===== CHECKBOX ===== */
+    .checkbox-label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; color: var(--text-secondary); cursor: pointer;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 480px) {
+      .course-stats { grid-template-columns: 1fr 1fr; }
+      .profile-header { flex-direction: column; }
+    }
+  </style>
 </head>
 <body>
-    <div class="geometric-bg"></div>
+  <div class="geometric-bg"></div>
 
-    <!-- Header -->
-    <div class="header">
-        <div class="header-content">
-            <div class="logo-section">
-                <div class="logo-icon">
-                    <i data-lucide="graduation-cap"></i>
-                </div>
-                <div class="logo-text">
-                    <h1>CT College Bot</h1>
-                    <div class="current-info" id="currentInfo">Група ОПК-412</div>
-                </div>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-content">
+      <div class="logo-section">
+        <div class="logo-icon">
+          <i data-lucide="graduation-cap"></i>
+        </div>
+        <div class="logo-text">
+          <h1>CT College Bot</h1>
+          <div class="current-info" id="currentInfo">Група ОПК-412</div>
+        </div>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
+        <i data-lucide="moon" id="themeIcon"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- ===== РОЗКЛАД ===== -->
+    <div id="scheduleTab" class="tab-content active">
+      <div class="date-selector" id="dateSelector"></div>
+      <div id="scheduleContent"></div>
+    </div>
+
+    <!-- ===== ЗАВДАННЯ ===== -->
+    <!-- ✅ ВАЖЛИВО: JS шукає id="homeworkContent" — НЕ змінювати! -->
+    <div id="homeworkTab" class="tab-content">
+      <div id="homeworkContent"></div>
+    </div>
+
+    <!-- ===== ПРОФІЛЬ ===== -->
+    <div id="profileTab" class="tab-content">
+      <div id="profileContent">
+
+        <!-- Залогінений стан -->
+        <div id="loggedInProfile" style="display:none;">
+
+          <!-- Картка профілю -->
+          <div class="profile-card" id="profileCard" style="display:none;">
+            <div class="profile-header">
+              <div class="avatar" id="userAvatar"></div>
+              <div class="profile-info">
+                <h2 id="profileName">User</h2>
+                <p id="profileEmail" style="color:var(--text-secondary); margin-top:2px;"></p>
+                <div id="profileStats" style="margin-top:8px; color:var(--text-secondary); font-size:13px;"></div>
+              </div>
+              <div>
+                <button class="btn btn-secondary" onclick="logout()">Вийти</button>
+              </div>
             </div>
-            <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
-                <i data-lucide="moon" id="themeIcon"></i>
+            <!-- ✅ Telegram кнопка — рендериться JS -->
+            <div id="telegramConnect"></div>
+          </div>
+
+          <!-- Адмін панель -->
+          <div class="profile-card admin-section" id="adminPanel" style="display:none;">
+            <h3>📊 Адміністрування</h3>
+            <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">
+              Завантажте Excel файл з розкладом або редагуйте посилання на уроки.
+            </p>
+
+            <div class="upload-section" id="uploadDropZone" style="position:relative;">
+              <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="handleExcelUpload(event)" style="display:none;">
+              <div class="upload-icon">📄</div>
+              <div class="upload-text">Перетягніть файл сюди</div>
+              <div class="upload-hint">або натисніть для вибору</div>
+              <div style="margin-top:12px; font-size:13px; color:var(--text-secondary);">Excel файл (.xlsx, .xls)</div>
+              <div id="uploadProgress" style="display:none; margin-top:16px;">
+                <div class="spinner" style="width:30px; height:30px;"></div>
+                <div style="margin-top:8px; font-size:13px;">Завантаження та парсинг...</div>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px;">
+              <button class="btn btn-secondary" onclick="document.getElementById('excelFile').click()">
+                <i data-lucide="folder-open"></i> Вибрати файл
+              </button>
+              <button class="btn btn-primary" onclick="openScheduleLinkEditor()">
+                <i data-lucide="edit"></i> Редагувати
+              </button>
+            </div>
+
+            <button class="btn btn-secondary" style="width:100%; margin-top:12px;" onclick="parseLocalSchedule()">
+              <i data-lucide="file-spreadsheet"></i> Завантажити з файлу
             </button>
-        </div>
-    </div>
 
-    <div class="container">
-        <div id="scheduleTab" class="tab-content active">
-            <div class="date-selector" id="dateSelector"></div>
-            <div id="scheduleContent"></div>
-        </div>
+            <button class="btn btn-secondary" id="saveServerBtn" style="width:100%; margin-top:12px;" onclick="saveScheduleToServer()">
+              <i data-lucide="save"></i> Зберегти на сервер
+            </button>
 
-        <div id="homeworkTab" class="tab-content">
-            <!-- Header з кнопкою назад (прихований за замовчуванням) -->
-            <div id="homeworkHeader" class="homework-header" style="display: none;">
-                <button class="btn-back" onclick="backToHomeworkList()">
-                    <i data-lucide="arrow-left"></i>
-                    <span>Назад</span>
-                </button>
-                <h2 id="currentCourseName"></h2>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+              <button class="btn btn-primary" onclick="viewParsedSchedule()">
+                <i data-lucide="eye"></i> Переглянути
+              </button>
+              <button class="btn btn-secondary" onclick="exportSchedule()">
+                <i data-lucide="download"></i> Експорт JSON
+              </button>
             </div>
+          </div>
 
-            <!-- Стан 1: Список курсів -->
-            <div id="homeworkCoursesList" class="homework-courses-list">
-                <div class="section-header">
-                    <h2>Курси:</h2>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="showSubmittedHomework" onchange="filterHomework()">
-                        <span>Показувати тільки здаваємі</span>
-                    </label>
-                </div>
-                <div id="homeworkCoursesContainer"></div>
-            </div>
-
-            <!-- Стан 2: Деталі курсу -->
-            <div id="homeworkCourseDetail" class="homework-course-detail" style="display: none;">
-                <!-- Статистика курсу -->
-                <div class="course-stats">
-                    <div class="stat-card">
-                        <div class="stat-icon"><i data-lucide="target"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-label">Прогрес</div>
-                            <div class="stat-value" id="courseProgress">0%</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i data-lucide="clipboard-list"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-label">Завдання</div>
-                            <div class="stat-value" id="courseTasksCount">0/0</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i data-lucide="clock"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-label">Найближчий</div>
-                            <div class="stat-value" id="courseNextDeadline">-</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Фільтри -->
-                <div class="homework-filters">
-                    <button class="filter-btn active" data-filter="all" onclick="filterCourseHomework('all')">
-                        Всі
-                    </button>
-                    <button class="filter-btn" data-filter="active" onclick="filterCourseHomework('active')">
-                        Активні
-                    </button>
-                    <button class="filter-btn" data-filter="completed" onclick="filterCourseHomework('completed')">
-                        Виконані
-                    </button>
-                </div>
-
-                <!-- Список завдань курсу -->
-                <div id="courseHomeworkList"></div>
-            </div>
         </div>
 
-        <div id="profileTab" class="tab-content">
-            <div id="profileContent">
-                <div id="loggedInProfile" style="display:none;">
-                    <div class="profile-card" id="profileCard" style="display:none;">
-                        <div class="profile-header">
-                            <div class="avatar" id="userAvatar"></div>
-                            <div class="profile-info" style="flex:1;">
-                                <h2 id="profileName">User</h2>
-                                <p id="profileEmail" style="color:var(--text-secondary);"></p>
-                                <div id="profileStats" style="margin-top:10px; color:var(--text-secondary); font-size:14px;"></div>
-                            </div>
-                            <div>
-                                <button class="btn btn-secondary" onclick="logout()">Вийти</button>
-                            </div>
-                        </div>
-                        <div id="telegramConnect"></div>
-                    </div>
-
-                    <div class="profile-card admin-section" id="adminPanel" style="display: none;">
-    <h3>📊 Адміністрування</h3>
-    <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 16px;">
-        Завантажте Excel файл з розкладом або редагуйте посилання на уроки.
-    </p>
-
-    <!-- Drag & Drop область -->
-    <div class="upload-section" id="uploadDropZone" style="position: relative;">
-        <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="handleExcelUpload(event)" style="display: none;">
-        
-        <div class="upload-icon">📄</div>
-        <div class="upload-text">Перетягніть файл сюди</div>
-        <div class="upload-hint">або натисніть для вибору</div>
-        <div style="margin-top: 12px; font-size: 13px; color: var(--text-secondary);">
-            Excel файл (.xlsx, .xls)
-        </div>
-        
-        <!-- Индикатор загрузки -->
-        <div id="uploadProgress" style="display: none; margin-top: 16px;">
-            <div class="spinner" style="width: 30px; height: 30px; margin: 0 auto;"></div>
-            <div style="margin-top: 8px; font-size: 13px; color: var(--text-primary);">
-                Завантаження та парсинг...
+        <!-- Не залогінений стан -->
+        <div id="loginProfile">
+          <div class="auth-container">
+            <div class="auth-icon">
+              <i data-lucide="lock-keyhole"></i>
             </div>
+            <h2>Вхід до системи</h2>
+            <p>Увійдіть через Google для доступу до розкладу та завдань</p>
+            <div id="googleSignInBtn"></div>
+          </div>
         </div>
+
+      </div>
     </div>
+  </div>
 
-    <!-- Кнопки действий -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;">
-        <button class="btn btn-secondary" onclick="document.getElementById('excelFile').click()">
-            <i data-lucide="folder-open"></i> Вибрати файл
-        </button>
-        
-        <button class="btn btn-primary" onclick="openScheduleLinkEditor()">
-            <i data-lucide="edit"></i> Редагувати
-        </button>
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <div class="nav-item active">
+      <div class="nav-icon"><i data-lucide="calendar"></i></div>
+      <div class="nav-label">Розклад</div>
     </div>
-
-    <button class="btn btn-secondary" style="width: 100%; margin-top: 12px;" onclick="parseLocalSchedule()">
-        <i data-lucide="file-spreadsheet"></i> Завантажити з huy.xlsx
-    </button>
-
-    <button class="btn btn-secondary" id="saveServerBtn" style="width:100%; margin-top:12px;" onclick="saveScheduleToServer()">
-        <i data-lucide="save"></i> Зберегти на сервер (admin)
-    </button>
-
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
-        <button class="btn btn-primary" onclick="viewParsedSchedule()">
-            <i data-lucide="eye"></i> Переглянути
-        </button>
-        <button class="btn btn-secondary" onclick="exportSchedule()">
-            <i data-lucide="download"></i> Експорт JSON
-        </button>
+    <div class="nav-item">
+      <div class="nav-icon"><i data-lucide="book-open"></i></div>
+      <div class="nav-label">Завдання</div>
     </div>
-</div>
+    <div class="nav-item">
+      <div class="nav-icon"><i data-lucide="user"></i></div>
+      <div class="nav-label">Профіль</div>
+    </div>
+  </div>
 
-<script>
-// Drag & Drop функционал
-(function initDragDrop() {
-    const dropZone = document.getElementById('uploadDropZone');
-    const fileInput = document.getElementById('excelFile');
-    
-    if (!dropZone || !fileInput) return;
+  <script src="app-opk412.js?v=3"></script>
 
-    // Клик по зоне открывает выбор файла
-    dropZone.addEventListener('click', (e) => {
-        if (e.target.closest('#uploadProgress')) return; // Не кликать во время загрузки
+  <script>
+    // Drag & Drop для адмін зони
+    (function initDragDrop() {
+      const dropZone = document.getElementById('uploadDropZone');
+      const fileInput = document.getElementById('excelFile');
+      if (!dropZone || !fileInput) return;
+
+      dropZone.addEventListener('click', e => {
+        if (e.target.closest('#uploadProgress')) return;
         fileInput.click();
-    });
+      });
 
-    // Предотвращаем стандартное поведение браузера
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, preventDefaults, false);
-        document.body.addEventListener(eventName, preventDefaults, false);
-    });
-
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    // Визуальная обратная связь
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, highlight, false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, unhighlight, false);
-    });
-
-    function highlight() {
+      ['dragenter','dragover','dragleave','drop'].forEach(ev => {
+        dropZone.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); });
+        document.body.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); });
+      });
+      ['dragenter','dragover'].forEach(ev => dropZone.addEventListener(ev, () => {
         dropZone.style.borderColor = 'var(--primary)';
-        dropZone.style.background = 'rgba(0, 122, 255, 0.1)';
-        dropZone.style.transform = 'scale(1.02)';
-    }
-
-    function unhighlight() {
+        dropZone.style.background = 'rgba(0,122,255,0.08)';
+      }));
+      ['dragleave','drop'].forEach(ev => dropZone.addEventListener(ev, () => {
         dropZone.style.borderColor = '';
         dropZone.style.background = '';
-        dropZone.style.transform = '';
-    }
-
-    // Обработка drop
-    dropZone.addEventListener('drop', handleDrop, false);
-
-    function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-
+      }));
+      dropZone.addEventListener('drop', e => {
+        const files = e.dataTransfer.files;
         if (files.length > 0) {
-            fileInput.files = files;
-            // Триггерим событие change
-            const event = new Event('change', { bubbles: true });
-            fileInput.dispatchEvent(event);
+          fileInput.files = files;
+          fileInput.dispatchEvent(new Event('change', { bubbles: true }));
         }
-    }
-
-    // Показать индикатор загрузки
-    fileInput.addEventListener('change', () => {
+      });
+      fileInput.addEventListener('change', () => {
         if (fileInput.files.length > 0) {
-            const progress = document.getElementById('uploadProgress');
-            if (progress) {
-                progress.style.display = 'block';
-                dropZone.querySelector('.upload-icon').style.display = 'none';
-                dropZone.querySelector('.upload-text').style.display = 'none';
-                dropZone.querySelector('.upload-hint').style.display = 'none';
-            }
+          const p = document.getElementById('uploadProgress');
+          if (p) {
+            p.style.display = 'block';
+            dropZone.querySelector('.upload-icon').style.display = 'none';
+            dropZone.querySelector('.upload-text').style.display = 'none';
+            dropZone.querySelector('.upload-hint').style.display = 'none';
+          }
         }
-    });
-})();
+      });
+    })();
 
-// Функция для просмотра распарсенного расписания
-function viewParsedSchedule() {
-    const schedule = scheduleData['ОПК-412'];
-    if (!schedule || schedule.length === 0) {
+    // Перегляд розкладу (адмін)
+    function viewParsedSchedule() {
+      const schedule = typeof scheduleData !== 'undefined' ? scheduleData['ОПК-412'] : null;
+      if (!schedule || schedule.length === 0) {
         alert('Розклад порожній. Завантажте файл спочатку.');
         return;
-    }
-
-    const days = ['Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця'];
-    let text = '📅 РОЗКЛАД ОПК-412\n\n';
-    
-    schedule.forEach((day, i) => {
+      }
+      const days = ['Понеділок','Вівторок','Середа','Четвер','Пʼятниця'];
+      let text = '📅 РОЗКЛАД ОПК-412\n\n';
+      schedule.forEach((day, i) => {
         text += `${days[i]} (${day.length} пар):\n`;
-        day.forEach((lesson, j) => {
-            text += `  ${j+1}. ${lesson.time || ''} - ${lesson.title || 'Без назви'}\n`;
-            if (lesson.teacher) text += `     👤 ${lesson.teacher}\n`;
-            if (lesson.room) text += `     🚪 ${lesson.room}\n`;
-            if (lesson.conferenceUrl || lesson.conference) text += `     🔗 ${lesson.conferenceUrl || lesson.conference}\n`;
+        day.forEach((l, j) => {
+          text += `  ${j+1}. ${l.time||''} - ${l.title||'Без назви'}\n`;
+          if (l.teacher) text += `     👤 ${l.teacher}\n`;
+          if (l.room)    text += `     🚪 ${l.room}\n`;
+          if (l.conference || l.conferenceUrl) text += `     🔗 ${l.conference||l.conferenceUrl}\n`;
         });
         text += '\n';
-    });
+      });
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;';
+      modal.innerHTML = `
+        <div style="background:var(--card-bg);border-radius:16px;padding:24px;max-width:600px;max-height:80vh;overflow-y:auto;width:100%;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;">📅 Розклад ОПК-412</h3>
+            <button class="btn btn-secondary" onclick="this.closest('div[style*=fixed]').remove()">✕</button>
+          </div>
+          <pre style="white-space:pre-wrap;font-family:monospace;font-size:13px;line-height:1.6;color:var(--text);">${text}</pre>
+          <button class="btn btn-primary" style="width:100%;margin-top:16px;" onclick="this.closest('div[style*=fixed]').remove()">Закрити</button>
+        </div>`;
+      document.body.appendChild(modal);
+      modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+    }
 
-    // Создаем модальное окно для просмотра
-    const modal = document.createElement('div');
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.right = '0';
-    modal.style.bottom = '0';
-    modal.style.background = 'rgba(0,0,0,0.5)';
-    modal.style.zIndex = '999999';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.padding = '20px';
-
-    modal.innerHTML = `
-        <div style="background: var(--bg-secondary); border-radius: 16px; padding: 24px; max-width: 600px; max-height: 80vh; overflow-y: auto; width: 100%;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h3 style="margin: 0;">📅 Розклад ОПК-412</h3>
-                <button class="btn btn-secondary" onclick="this.closest('div[style*=\"position: fixed\"]').remove()">✕</button>
-            </div>
-            <pre style="white-space: pre-wrap; font-family: monospace; font-size: 13px; line-height: 1.6; color: var(--text-primary);">${text}</pre>
-            <button class="btn btn-primary" style="width: 100%; margin-top: 16px;" onclick="this.closest('div[style*=\"position: fixed\"]').remove()">Закрити</button>
-        </div>
-    `;
-
-    document.body.appendChild(modal);
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) modal.remove();
-    });
-}
-</script>
-                </div>
-
-                <div id="loginProfile">
-                    <div class="auth-container">
-                <div class="auth-icon">
-                    <i data-lucide="lock-keyhole"></i>
-                </div>
-                        <h2>Вхід до системи</h2>
-                        <p>Увійдіть через Google для доступу до розкладу та завдань</p>
-                        <div id="googleSignInBtn"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="bottom-nav">
-        <a class="nav-item active" onclick="switchTab('schedule')">
-            <div class="nav-icon"><i data-lucide="calendar"></i></div>
-            <div class="nav-label">Розклад</div>
-        </a>
-        <a class="nav-item" onclick="switchTab('homework')">
-            <div class="nav-icon"><i data-lucide="book-open"></i></div>
-            <div class="nav-label">Завдання</div>
-        </a>
-        <a class="nav-item" onclick="switchTab('profile')">
-            <div class="nav-icon"><i data-lucide="user"></i></div>
-            <div class="nav-label">Профіль</div>
-        </a>
-    </div>
-
-    <script src="app-opk412.js?v=2"></script>
-    <script>
-        // Initialize Lucide icons
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
-    </script>
+    // Ініціалізуємо Lucide іконки після завантаження
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  </script>
 </body>
 </html>
