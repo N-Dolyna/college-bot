@@ -107,7 +107,11 @@ CORS(app,
      allow_headers=['Content-Type', 'Authorization'],
      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
      expose_headers=['Content-Type'])
-
+with app.app_context():
+    load_tokens()
+    load_tg_users()
+    reload_schedule_from_excel()
+    start_notification_scheduler()
 # =========================================================
 # 3. STORAGE
 # =========================================================
@@ -955,10 +959,7 @@ def get_groups_list():
 # STARTUP
 # =========================================================
 if __name__ == '__main__':
-    load_tokens()
-    load_tg_users()
-    reload_schedule_from_excel()
-    start_notification_scheduler()  # NEW: запускаємо scheduler
+    app.run
 
     port = int(os.getenv('PORT', 8000))
     logger.info(f"🚀 Server running on port {port}")
