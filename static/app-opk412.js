@@ -357,6 +357,9 @@ function renderTelegramConnectButton() {
         <a href="${deepLink}" target="_blank" rel="noopener noreferrer">
           <button class="btn btn-primary" style="width:100%;">📲 Підключити через Telegram</button>
         </a>
+        <button class="btn btn-secondary" onclick="checkTelegramStatus()" style="width:100%; margin-top:8px; font-size:13px;">
+          🔄 Я вже підключився — оновити статус
+        </button>
       </div>`;
   }
 }
@@ -378,6 +381,30 @@ async function updateTgSettings(key, value) {
     showNotification('Помилка: ' + e.message, 'error');
   }
 }
+
+async function checkTelegramStatus() {
+  if (!userData) return;
+  try {
+    const resp = await fetchWithTimeout(
+      `${API_BASE}/telegram/status?userId=${encodeURIComponent(userData.email)}`, {}, 8000
+    );
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const j = await resp.json();
+    if (j.linked) {
+      userData.telegram_id = j.chat_id;
+      userData.tg_notify_lessons = j.notify_lessons;
+      userData.tg_notify_deadlines = j.notify_deadlines;
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
+      renderTelegramConnectButton();
+      showNotification('Telegram підключено! ✅', 'success');
+    } else {
+      showNotification('Telegram ще не підключено. Спочатку натисніть кнопку вище.', 'warning');
+    }
+  } catch (e) {
+    showNotification('Помилка перевірки: ' + e.message, 'error');
+  }
+}
+
 // ===== LOGOUT =====
 function logout() {
   if (!confirm('Ви впевнені, що хочете вийти?')) return;
