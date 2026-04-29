@@ -299,18 +299,51 @@ function renderTelegramConnectButton() {
   const container = document.getElementById('telegramConnect');
   if (!container || !userData) return;
   const tgLinked = userData.telegram_id;
+
   if (tgLinked) {
     container.innerHTML = `
-      <div style="display:flex; align-items:center; gap:10px; padding:12px; background:var(--card-bg); border-radius:12px; border:1px solid var(--border); margin-top:12px;">
-        <span style="font-size:24px;">✅</span>
-        <div>
-          <div style="font-weight:600;">Telegram підключено</div>
-          <div style="font-size:13px; color:var(--text-secondary);">Сповіщення про уроки та дедлайни активні</div>
+      <div style="padding:12px; background:var(--card-bg); border-radius:12px; border:1px solid var(--border); margin-top:12px;">
+        
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+          <span style="font-size:24px;">✅</span>
+          <div>
+            <div style="font-weight:600;">Telegram підключено</div>
+            <div style="font-size:13px; color:var(--text-secondary);">@Kharkiv_CT_College_Bot</div>
+          </div>
+          <button class="btn btn-secondary" onclick="unlinkTelegram()" style="margin-left:auto; font-size:13px;">
+            Відʼєднати
+          </button>
         </div>
-        <button class="btn btn-secondary" onclick="unlinkTelegram()" style="margin-left:auto;">Відʼєднати</button>
+
+        <div style="border-top:1px solid var(--border); padding-top:12px;">
+          <div style="font-weight:600; margin-bottom:10px; font-size:14px;">⚙️ Налаштування сповіщень</div>
+
+          <label style="display:flex; align-items:center; justify-content:space-between; padding:10px; background:var(--bg); border-radius:10px; margin-bottom:8px; cursor:pointer;">
+            <div>
+              <div style="font-weight:500;">🔔 Початок уроків</div>
+              <div style="font-size:12px; color:var(--text-secondary);">За 15 хвилин до початку</div>
+            </div>
+            <input type="checkbox" id="tgNotifyLessons"
+              ${userData.tg_notify_lessons !== false ? 'checked' : ''}
+              onchange="updateTgSettings('notify_lessons', this.checked)"
+              style="width:18px; height:18px; cursor:pointer;">
+          </label>
+
+          <label style="display:flex; align-items:center; justify-content:space-between; padding:10px; background:var(--bg); border-radius:10px; cursor:pointer;">
+            <div>
+              <div style="font-weight:500;">⚠️ Дедлайни завдань</div>
+              <div style="font-size:12px; color:var(--text-secondary);">За 24 год та за 1 годину</div>
+            </div>
+            <input type="checkbox" id="tgNotifyDeadlines"
+              ${userData.tg_notify_deadlines !== false ? 'checked' : ''}
+              onchange="updateTgSettings('notify_deadlines', this.checked)"
+              style="width:18px; height:18px; cursor:pointer;">
+          </label>
+        </div>
+
       </div>`;
   } else {
-    const botName = 'Kharkiv_CT_College_Bot'; 
+    const botName = 'Kharkiv_CT_College_Bot';
     const deepLink = `https://t.me/${botName}?start=link_${encodeURIComponent(btoa(userData.email))}`;
     container.innerHTML = `
       <div style="padding:12px; background:var(--card-bg); border-radius:12px; border:1px solid var(--border); margin-top:12px;">
@@ -328,23 +361,22 @@ function renderTelegramConnectButton() {
   }
 }
 
-async function unlinkTelegram() {
+async function updateTgSettings(key, value) {
   if (!userData) return;
   try {
-    await fetchWithTimeout(`${API_BASE}/telegram/unlink`, {
+    await fetchWithTimeout(`${API_BASE}/telegram/settings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: userData.email })
+      body: JSON.stringify({ userId: userData.email, [key]: value })
     });
-    delete userData.telegram_id;
+    if (key === 'notify_lessons') userData.tg_notify_lessons = value;
+    if (key === 'notify_deadlines') userData.tg_notify_deadlines = value;
     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
-    renderTelegramConnectButton();
-    showNotification('Telegram відʼєднано', 'info');
+    showNotification(value ? 'Сповіщення увімкнено ✅' : 'Сповіщення вимкнено 🔕', 'success');
   } catch (e) {
     showNotification('Помилка: ' + e.message, 'error');
   }
 }
-
 // ===== LOGOUT =====
 function logout() {
   if (!confirm('Ви впевнені, що хочете вийти?')) return;
