@@ -15,7 +15,6 @@ import requests
 import jwt
 import datetime
 import base64
-import asyncio
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import Flask, request, jsonify, session, redirect
@@ -265,28 +264,24 @@ def get_telegram_bot():
         return None
     return Bot(token=Config.TELEGRAM_BOT_TOKEN)
 
-async def _send_tg_message(chat_id: int, text: str):
-    """Відправляє повідомлення в Telegram."""
-    bot = get_telegram_bot()
-    if not bot: return False
-    try:
-        await bot.send_message(chat_id=chat_id, text=text, parse_mode=ParseMode.HTML)
-        return True
-    except Exception as e:
-        logger.error(f"TG send error to {chat_id}: {e}")
-        return False
-
 def send_telegram_notification(chat_id: int, text: str):
-    """Синхронна обгортка для відправки TG повідомлення."""
+    """Відправляє повідомлення через простий HTTP запит."""
+    if not Config.TELEGRAM_BOT_TOKEN:
+        return False
     try:
-        loop = asyncio.new_event_loop()
-        result = loop.run_until_complete(_send_tg_message(chat_id, text))
-        loop.close()
-        return result
+        url = f"https://api.telegram.org/bot{Config.TELEGRAM_BOT_TOKEN}/sendMessage"
+        resp = requests.post(url, json={
+            'chat_id': chat_id,
+            'text': text,
+            'parse_mode': 'HTML'
+        }, timeout=10)
+        if not resp.ok:
+            logger.error(f"TG send error: {resp.text}")
+        return resp.ok
     except Exception as e:
         logger.error(f"TG notification error: {e}")
         return False
-
+        
 def notify_lesson_start(email: str, lesson: dict):
     """Сповіщення про початок уроку."""
     tg_data = TG_USERS_CACHE.get(email)
