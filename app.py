@@ -671,6 +671,21 @@ def telegram_settings():
     save_tg_user(email, tg_data)
     return jsonify({'success': True, 'settings': tg_data})
 
+@app.route('/api/telegram/status', methods=['GET'])
+def telegram_status():
+    email = request.args.get('userId')
+    if not email:
+        return json_error("userId required", 400)
+    tg_data = TG_USERS_CACHE.get(email)
+    if tg_data and tg_data.get('chat_id'):
+        return jsonify({
+            'linked': True,
+            'chat_id': tg_data['chat_id'],
+            'notify_lessons': tg_data.get('notify_lessons', True),
+            'notify_deadlines': tg_data.get('notify_deadlines', True)
+        })
+    return jsonify({'linked': False})
+
 @app.route('/api/telegram/webhook', methods=['POST'])
 def telegram_webhook():
     """
