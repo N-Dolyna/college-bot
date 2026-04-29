@@ -369,10 +369,11 @@ async function updateTgSettings(key, value) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: userData.email, [key]: value })
     });
+    // Зберігаємо локально
     if (key === 'notify_lessons') userData.tg_notify_lessons = value;
     if (key === 'notify_deadlines') userData.tg_notify_deadlines = value;
     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
-    showNotification(value ? 'Сповіщення увімкнено ✅' : 'Сповіщення вимкнено 🔕', 'success');
+    showNotification(value ? 'Сповіщення увімкнено' : 'Сповіщення вимкнено', 'success');
   } catch (e) {
     showNotification('Помилка: ' + e.message, 'error');
   }
